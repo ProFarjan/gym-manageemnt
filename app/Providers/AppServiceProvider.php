@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Member;
 use App\Models\User;
+use App\Notifications\Channels\SmsChannel;
 use App\Observers\MemberObserver;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,5 +30,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Member::observe(MemberObserver::class);
+
+        Notification::extend('sms', fn ($app) => new SmsChannel);
     }
 }

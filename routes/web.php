@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\BulkNotificationController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GymClassController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
@@ -176,6 +177,12 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     });
     Route::middleware('permission:settings.update')->group(function () {
         Route::post('/zkteco-sync-logs/{syncLog}/retry', [ZKTecoSyncLogController::class, 'retry'])->name('zkteco-sync-logs.retry');
+    });
+
+    // Bulk Notifications
+    Route::middleware('permission:members.update')->group(function () {
+        Route::get('/bulk-notifications', [BulkNotificationController::class, 'create'])->name('bulk-notifications.create');
+        Route::post('/bulk-notifications', [BulkNotificationController::class, 'store'])->name('bulk-notifications.store');
     });
 });
 

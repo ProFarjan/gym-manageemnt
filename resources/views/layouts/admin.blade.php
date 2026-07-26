@@ -45,6 +45,11 @@
                         <a class="nav-link" href="{{ route('admin.zkteco-sync-logs.index') }}">ZKTeco Sync</a>
                     </li>
                 @endcan
+                @can('members.update')
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.bulk-notifications.create') }}">Bulk Message</a>
+                    </li>
+                @endcan
             </ul>
 
             <div class="d-flex align-items-center ms-auto">

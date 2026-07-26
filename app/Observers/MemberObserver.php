@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Jobs\SyncMemberToZKTeco;
 use App\Models\Member;
 use App\Models\ZKTecoSyncLog;
+use App\Notifications\RegistrationConfirmation;
 
 class MemberObserver
 {
@@ -13,6 +14,8 @@ class MemberObserver
         if ($member->status === 'active') {
             $this->queueSync($member, 'create_user');
         }
+
+        $member->notify(new RegistrationConfirmation);
     }
 
     public function updated(Member $member): void

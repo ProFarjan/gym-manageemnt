@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Member;
 use App\Models\Payment;
+use App\Notifications\PaymentReceivedNotification;
 
 class PaymentRecorder
 {
@@ -53,6 +54,8 @@ class PaymentRecorder
         }
 
         $payment->save();
+
+        $member->notify(new PaymentReceivedNotification($payment));
 
         return $payment;
     }
