@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GymClassController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\PersonalTrainingPackageController;
 use App\Http\Controllers\Admin\TrainerController;
+use App\Http\Controllers\Admin\ZKTecoSyncLogController;
 use App\Http\Controllers\Auth\MemberLoginController;
 use App\Http\Controllers\Auth\StaffLoginController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
@@ -160,6 +162,20 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     });
     Route::middleware('permission:payments.view')->group(function () {
         Route::get('/payments/{payment}/receipt', [AdminPaymentController::class, 'receipt'])->name('payments.receipt');
+    });
+
+    // Attendance
+    Route::middleware('permission:attendance.create')->group(function () {
+        Route::post('/members/{member}/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('members.attendance.check-in');
+        Route::post('/members/{member}/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('members.attendance.check-out');
+    });
+
+    // ZKTeco Device Sync
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('/zkteco-sync-logs', [ZKTecoSyncLogController::class, 'index'])->name('zkteco-sync-logs.index');
+    });
+    Route::middleware('permission:settings.update')->group(function () {
+        Route::post('/zkteco-sync-logs/{syncLog}/retry', [ZKTecoSyncLogController::class, 'retry'])->name('zkteco-sync-logs.retry');
     });
 });
 

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Member;
 use App\Models\User;
+use App\Observers\MemberObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,5 +26,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, string $ability) {
             return $user instanceof User && $user->hasRole('Super Admin') ? true : null;
         });
+
+        Member::observe(MemberObserver::class);
     }
 }

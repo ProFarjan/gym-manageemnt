@@ -40,6 +40,11 @@
                         <a class="nav-link" href="{{ route('admin.trainers.index') }}">Trainers</a>
                     </li>
                 @endcan
+                @can('settings.view')
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.zkteco-sync-logs.index') }}">ZKTeco Sync</a>
+                    </li>
+                @endcan
             </ul>
 
             <div class="d-flex align-items-center ms-auto">

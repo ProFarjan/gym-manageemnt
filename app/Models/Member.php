@@ -80,6 +80,21 @@ class Member extends Authenticatable
         return $this->hasMany(MemberTrainingPackage::class);
     }
 
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function zkTecoSyncLogs(): HasMany
+    {
+        return $this->hasMany(ZKTecoSyncLog::class, 'member_id');
+    }
+
+    public function openAttendance(): ?Attendance
+    {
+        return $this->attendances()->whereNull('check_out')->latest('check_in')->first();
+    }
+
     public function isLifetime(): bool
     {
         return (bool) $this->membershipPlan?->is_lifetime;

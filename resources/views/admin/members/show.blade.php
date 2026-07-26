@@ -71,6 +71,22 @@
                 </form>
             @endif
         @endcan
+        @can('attendance.create')
+            @if ($member->status === 'active')
+                @php($openAttendance = $member->openAttendance())
+                @if ($openAttendance)
+                    <form method="POST" action="{{ route('admin.members.attendance.check-out', $member) }}">
+                        @csrf
+                        <button class="btn btn-outline-primary">Check Out (in since {{ $openAttendance->check_in->format('h:i A') }})</button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('admin.members.attendance.check-in', $member) }}">
+                        @csrf
+                        <button class="btn btn-primary">Check In</button>
+                    </form>
+                @endif
+            @endif
+        @endcan
     </div>
 
     <div class="row g-3">
@@ -281,5 +297,63 @@
                 </form>
             </div>
         @endcan
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">Attendance History</div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Duration</th><th>Source</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($recentAttendance as $attendance)
+                        <tr>
+                            <td>{{ $attendance->check_in->format('d M Y') }}</td>
+                            <td>{{ $attendance->check_in->format('h:i A') }}</td>
+                            <td>
+                                @if ($attendance->check_out)
+                                    {{ $attendance->check_out->format('h:i A') }}
+                                @else
+                                    <span class="badge bg-info">Still In</span>
+                                @endif
+                            </td>
+                            <td>{{ $attendance->duration_minutes ? $attendance->duration_minutes.' min' : '—' }}</td>
+                            <td class="text-capitalize">{{ $attendance->source }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="text-center text-muted py-3">No attendance recorded yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">ZKTeco Device Sync</div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>Action</th><th>Status</th><th>Attempts</th><th>Synced At</th><th>Error</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($member->zkTecoSyncLogs as $log)
+                        <tr>
+                            <td>{{ ucfirst(str_replace('_', ' ', $log->action)) }}</td>
+                            <td>
+                                <span class="badge bg-{{ match($log->status) { 'success' => 'success', 'failed' => 'danger', default => 'secondary' } }}">
+                                    {{ ucfirst($log->status) }}
+                                </span>
+                            </td>
+                            <td>{{ $log->attempts }}</td>
+                            <td>{{ $log->synced_at?->format('d M Y h:i A') ?? '—' }}</td>
+                            <td class="small text-danger">{{ $log->error_message }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="text-center text-muted py-3">No device sync activity yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 @endsection
