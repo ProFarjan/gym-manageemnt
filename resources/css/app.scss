@@ -1,0 +1,14 @@
+// GirliGirl Gym & Fitness brand overrides
+$primary: #d6336c;
+$secondary: #495057;
+$border-radius: 0.5rem;
+
+@import "bootstrap/scss/bootstrap";
+
+body {
+    background-color: #f8f5f7;
+}
+
+.navbar-brand {
+    font-weight: 700;
+}
