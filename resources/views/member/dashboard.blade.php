@@ -31,4 +31,10 @@
             </div>
         </div>
     </div>
+
+    @if (!$member->isLifetime() && in_array($member->status, ['active', 'expired']))
+        <div class="mt-3">
+            <a href="{{ route('member.renew') }}" class="btn btn-primary">Renew Membership</a>
+        </div>
+    @endif
 @endsection
