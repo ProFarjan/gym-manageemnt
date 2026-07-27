@@ -50,6 +50,16 @@
                         <a class="nav-link" href="{{ route('admin.bulk-notifications.create') }}">Bulk Message</a>
                     </li>
                 @endcan
+                @can('payments.view')
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.expenses.index') }}">Expenses</a>
+                    </li>
+                @endcan
+                @can('reports.view')
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.reports.index') }}">Reports</a>
+                    </li>
+                @endcan
             </ul>
 
             <div class="d-flex align-items-center ms-auto">
@@ -74,5 +84,7 @@
 
         @yield('content')
     </div>
+
+    @stack('scripts')
 </body>
 </html>

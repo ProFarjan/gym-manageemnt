@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BulkNotificationController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\GymClassController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\MembershipPlanController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Admin\MemberTrainingPackageController;
 use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\PersonalTrainingPackageController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\TrainerController;
 use App\Http\Controllers\Admin\ZKTecoSyncLogController;
 use App\Http\Controllers\Auth\MemberLoginController;
@@ -186,6 +188,38 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     Route::middleware('permission:members.update')->group(function () {
         Route::get('/bulk-notifications', [BulkNotificationController::class, 'create'])->name('bulk-notifications.create');
         Route::post('/bulk-notifications', [BulkNotificationController::class, 'store'])->name('bulk-notifications.store');
+    });
+
+    // Expenses
+    Route::middleware('permission:payments.view')->group(function () {
+        Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+    });
+    Route::middleware('permission:payments.create')->group(function () {
+        Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
+        Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    });
+    Route::middleware('permission:payments.update')->group(function () {
+        Route::get('/expenses/{expense}/edit', [ExpenseController::class, 'edit'])->name('expenses.edit');
+        Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+    });
+    Route::middleware('permission:payments.delete')->group(function () {
+        Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+    });
+
+    // Reports
+    Route::middleware('permission:reports.view')->group(function () {
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/admissions', [ReportController::class, 'admissions'])->name('reports.admissions');
+        Route::get('/reports/members', [ReportController::class, 'members'])->name('reports.members');
+        Route::get('/reports/attendance', [ReportController::class, 'attendance'])->name('reports.attendance');
+        Route::get('/reports/payments', [ReportController::class, 'payments'])->name('reports.payments');
+        Route::get('/reports/due', [ReportController::class, 'due'])->name('reports.due');
+        Route::get('/reports/expired-members', [ReportController::class, 'expiredMembers'])->name('reports.expired-members');
+        Route::get('/reports/closed-members', [ReportController::class, 'closedMembers'])->name('reports.closed-members');
+        Route::get('/reports/collection', [ReportController::class, 'collection'])->name('reports.collection');
+        Route::get('/reports/expenses', [ReportController::class, 'expenses'])->name('reports.expenses');
+        Route::get('/reports/offers', [ReportController::class, 'offers'])->name('reports.offers');
+        Route::get('/reports/discounts', [ReportController::class, 'discounts'])->name('reports.discounts');
     });
 });
 
