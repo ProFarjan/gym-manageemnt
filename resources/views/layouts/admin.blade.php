@@ -46,11 +46,14 @@
                     </li>
                 @endcan
                 @can('settings.view')
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.zkteco-sync-logs.index') }}">ZKTeco Sync</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.settings.edit') }}">Settings</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Site &amp; System</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.settings.edit') }}">Settings</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.gallery.index') }}">Gallery</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.contact-messages.index') }}">Contact Messages</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.zkteco-sync-logs.index') }}">ZKTeco Sync</a></li>
+                        </ul>
                     </li>
                 @endcan
                 @can('members.update')

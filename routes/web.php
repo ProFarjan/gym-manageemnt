@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BulkNotificationController;
+use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\Admin\GalleryController;
 use App\Http\Controllers\Admin\GymClassController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\MembershipPlanController;
@@ -23,11 +25,21 @@ use App\Http\Controllers\Member\OnlineRenewalController;
 use App\Http\Controllers\Member\PaymentHistoryController as MemberPaymentHistoryController;
 use App\Http\Controllers\Member\ProfileController as MemberProfileController;
 use App\Http\Controllers\MemberRegistrationController;
+use App\Http\Controllers\PublicController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Public marketing website
+Route::get('/', [PublicController::class, 'home'])->name('home');
+Route::get('/about', [PublicController::class, 'about'])->name('about');
+Route::get('/membership-plans', [PublicController::class, 'membershipPlans'])->name('membership-plans');
+Route::get('/personal-training', [PublicController::class, 'personalTraining'])->name('personal-training');
+Route::get('/weight-training', [PublicController::class, 'weightTraining'])->name('weight-training');
+Route::get('/classes', [PublicController::class, 'classes'])->name('classes');
+Route::get('/diet-nutrition', [PublicController::class, 'dietNutrition'])->name('diet-nutrition');
+Route::get('/tips-tricks', [PublicController::class, 'tipsTricks'])->name('tips-tricks');
+Route::get('/gallery', [PublicController::class, 'gallery'])->name('gallery');
+Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
+Route::post('/contact', [PublicController::class, 'contactStore'])->name('contact.store');
 
 // Public online registration
 Route::get('/register', [MemberRegistrationController::class, 'create'])->name('register.create');
@@ -229,6 +241,25 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     });
     Route::middleware('permission:settings.update')->group(function () {
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+    });
+
+    // Gallery
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index');
+    });
+    Route::middleware('permission:settings.update')->group(function () {
+        Route::post('/gallery', [GalleryController::class, 'store'])->name('gallery.store');
+        Route::post('/gallery/{galleryImage}/toggle', [GalleryController::class, 'toggle'])->name('gallery.toggle');
+        Route::delete('/gallery/{galleryImage}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
+    });
+
+    // Contact Messages
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+        Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])->name('contact-messages.show');
+    });
+    Route::middleware('permission:settings.update')->group(function () {
+        Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
     });
 });
 

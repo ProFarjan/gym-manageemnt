@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             MembershipPlanSeeder::class,
             PaymentAccountSeeder::class,
+            GalleryImageSeeder::class,
         ]);
     }
 }
