@@ -14,8 +14,11 @@ use App\Http\Controllers\Admin\TrainerController;
 use App\Http\Controllers\Admin\ZKTecoSyncLogController;
 use App\Http\Controllers\Auth\MemberLoginController;
 use App\Http\Controllers\Auth\StaffLoginController;
+use App\Http\Controllers\Member\AttendanceHistoryController as MemberAttendanceHistoryController;
 use App\Http\Controllers\Member\DashboardController as MemberDashboardController;
 use App\Http\Controllers\Member\OnlineRenewalController;
+use App\Http\Controllers\Member\PaymentHistoryController as MemberPaymentHistoryController;
+use App\Http\Controllers\Member\ProfileController as MemberProfileController;
 use App\Http\Controllers\MemberRegistrationController;
 use Illuminate\Support\Facades\Route;
 
@@ -195,4 +198,12 @@ Route::middleware(['member.auth:member'])->prefix('member')->name('member.')->gr
     Route::get('/renew/checkout/{token}', [OnlineRenewalController::class, 'checkout'])->name('renew.checkout');
     Route::post('/renew/checkout/{token}/confirm', [OnlineRenewalController::class, 'confirm'])->name('renew.confirm');
     Route::get('/renew/success/{payment}', [OnlineRenewalController::class, 'success'])->name('renew.success');
+
+    Route::get('/payments', [MemberPaymentHistoryController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}/receipt', [MemberPaymentHistoryController::class, 'receipt'])->name('payments.receipt');
+
+    Route::get('/attendance', [MemberAttendanceHistoryController::class, 'index'])->name('attendance.index');
+
+    Route::get('/profile', [MemberProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [MemberProfileController::class, 'update'])->name('profile.update');
 });

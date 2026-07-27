@@ -9,6 +9,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        return view('member.dashboard', ['member' => Auth::guard('member')->user()]);
+        $member = Auth::guard('member')->user()->load('membershipPlan');
+
+        return view('member.dashboard', compact('member'));
     }
 }

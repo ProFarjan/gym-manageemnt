@@ -11,6 +11,21 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ route('member.dashboard') }}">{{ config('app.name') }}</a>
 
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('member.dashboard') }}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('member.payments.index') }}">Payment History</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('member.attendance.index') }}">Attendance</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('member.profile.edit') }}">Profile</a>
+                </li>
+            </ul>
+
             <div class="d-flex align-items-center ms-auto">
                 <span class="text-white small me-3">{{ auth('member')->user()->full_name }}</span>
                 <form method="POST" action="{{ route('member.logout') }}">
@@ -22,6 +37,10 @@
     </nav>
 
     <div class="container-fluid py-4">
+        @if (session('status'))
+            <div class="alert alert-success">{{ session('status') }}</div>
+        @endif
+
         @yield('content')
     </div>
 </body>
