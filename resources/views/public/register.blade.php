@@ -3,13 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Online Registration - {{ config('app.name') }}</title>
+    <title>Online Registration - {{ setting('business_name', config('app.name')) }}</title>
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
 </head>
 <body class="bg-light">
     <div class="container py-5" style="max-width: 720px;">
         <div class="text-center mb-4">
-            <h1 class="h3 mb-1">{{ config('app.name') }}</h1>
+            @if (setting('logo_path'))
+                <img src="{{ asset('storage/'.setting('logo_path')) }}" style="height:56px;" class="mb-2">
+            @endif
+            <h1 class="h3 mb-1">{{ setting('business_name', config('app.name')) }}</h1>
             <p class="text-muted">Online Membership Registration</p>
         </div>
 

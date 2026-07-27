@@ -26,7 +26,7 @@ class AutoCheckoutAttendance extends Command
      */
     public function handle(): int
     {
-        $closingTime = config('gym.closing_time');
+        $closingTime = setting('gym_closing_time', '22:00');
         $closedCount = 0;
 
         Attendance::whereNull('check_out')->each(function (Attendance $attendance) use ($closingTime, &$closedCount) {

@@ -3,13 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Admin Panel') - {{ config('app.name') }}</title>
+    <title>@yield('title', 'Admin Panel') - {{ setting('business_name', config('app.name')) }}</title>
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">{{ config('app.name') }}</a>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('admin.dashboard') }}">
+                @if (setting('logo_path'))
+                    <img src="{{ asset('storage/'.setting('logo_path')) }}" style="height:28px;">
+                @endif
+                {{ setting('business_name', config('app.name')) }}
+            </a>
 
             <ul class="navbar-nav me-auto">
                 @can('members.view')
@@ -43,6 +48,9 @@
                 @can('settings.view')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.zkteco-sync-logs.index') }}">ZKTeco Sync</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.settings.edit') }}">Settings</a>
                     </li>
                 @endcan
                 @can('members.update')

@@ -11,36 +11,35 @@ use Illuminate\Support\Facades\Log;
  * integration would send. Swap the body of each method for calls to the
  * device's SDK/protocol (ZKTeco devices are typically driven over a
  * proprietary TCP/UDP protocol, e.g. via the zklib/pyzk family of libraries)
- * once a device is on the network and its IP/port are known — see
- * config/zkteco.php for where those settings will live (Settings UI is
- * built in Phase 10).
+ * once a device is on the network — its IP/port/device ID are configurable
+ * in Admin > Settings and read here via setting().
  */
 class ZKTecoDeviceClient
 {
     public function createUser(Member $member): bool
     {
-        Log::info("[ZKTeco stub] createUser for member {$member->admission_id} ({$member->full_name})");
+        $this->log('createUser', $member);
 
         return true;
     }
 
     public function updateUser(Member $member): bool
     {
-        Log::info("[ZKTeco stub] updateUser for member {$member->admission_id} ({$member->full_name})");
+        $this->log('updateUser', $member);
 
         return true;
     }
 
     public function disableUser(Member $member): bool
     {
-        Log::info("[ZKTeco stub] disableUser for member {$member->admission_id} ({$member->full_name})");
+        $this->log('disableUser', $member);
 
         return true;
     }
 
     public function deleteUser(Member $member): bool
     {
-        Log::info("[ZKTeco stub] deleteUser for member {$member->admission_id} ({$member->full_name})");
+        $this->log('deleteUser', $member);
 
         return true;
     }
@@ -54,8 +53,20 @@ class ZKTecoDeviceClient
      */
     public function pullAttendanceLogs(): array
     {
-        Log::info('[ZKTeco stub] pullAttendanceLogs called — no device configured, returning no records.');
+        Log::info("[ZKTeco stub{$this->deviceSuffix()}] pullAttendanceLogs called — no device configured, returning no records.");
 
         return [];
+    }
+
+    private function log(string $action, Member $member): void
+    {
+        Log::info("[ZKTeco stub{$this->deviceSuffix()}] {$action} for member {$member->admission_id} ({$member->full_name})");
+    }
+
+    private function deviceSuffix(): string
+    {
+        $ip = setting('zkteco_ip');
+
+        return $ip ? " @ {$ip}:".setting('zkteco_port', '4370') : '';
     }
 }

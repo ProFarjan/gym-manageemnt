@@ -19,9 +19,16 @@
 </head>
 <body>
     <div class="header">
-        <h1>GirliGirl Gym &amp; Fitness</h1>
-        <p>Reja Tower, 3rd Floor, Lift-2 (Opposite of BRAC Bank), 24/Ka, Shaymachoron Roy Road, Notun Bazar, Mymensingh</p>
-        <p>Phone: 01728-381737</p>
+        @if (setting('logo_path'))
+            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->path(setting('logo_path')) }}" style="height:48px; margin-bottom:6px;">
+        @endif
+        <h1>{{ setting('business_name', config('app.name')) }}</h1>
+        @if (setting('business_address'))
+            <p>{{ setting('business_address') }}</p>
+        @endif
+        @if (setting('business_phone'))
+            <p>Phone: {{ setting('business_phone') }}</p>
+        @endif
     </div>
 
     <h2 style="text-align:center; font-size:16px;">Payment Receipt / Invoice</h2>
@@ -82,7 +89,7 @@
     </table>
 
     <div class="footer">
-        Thank you for choosing GirliGirl Gym &amp; Fitness — Mymensingh's First Ever &amp; Only Dedicated Ladies Gym.
+        {{ setting('invoice_footer', 'Thank you for your payment.') }}
     </div>
 </body>
 </html>

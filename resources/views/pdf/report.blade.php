@@ -15,7 +15,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>GirliGirl Gym &amp; Fitness</h1>
+        <h1>{{ setting('business_name', config('app.name')) }}</h1>
         <p>{{ $title }}</p>
         <p>Generated {{ now()->format('d M Y, h:i A') }}</p>
     </div>

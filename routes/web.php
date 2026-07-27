@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\PersonalTrainingPackageController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TrainerController;
 use App\Http\Controllers\Admin\ZKTecoSyncLogController;
 use App\Http\Controllers\Auth\MemberLoginController;
@@ -220,6 +221,14 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
         Route::get('/reports/expenses', [ReportController::class, 'expenses'])->name('reports.expenses');
         Route::get('/reports/offers', [ReportController::class, 'offers'])->name('reports.offers');
         Route::get('/reports/discounts', [ReportController::class, 'discounts'])->name('reports.discounts');
+    });
+
+    // Settings
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
+    });
+    Route::middleware('permission:settings.update')->group(function () {
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
     });
 });
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Registration Submitted - {{ config('app.name') }}</title>
+    <title>Registration Submitted - {{ setting('business_name', config('app.name')) }}</title>
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
 </head>
 <body class="d-flex align-items-center justify-content-center vh-100 bg-light">
