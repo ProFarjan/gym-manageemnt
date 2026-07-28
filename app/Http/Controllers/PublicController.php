@@ -17,7 +17,15 @@ class PublicController extends Controller
 {
     public function home()
     {
-        $plans = MembershipPlan::where('is_active', true)->orderBy('duration_in_months')->limit(3)->get();
+        // Exclude Lifetime from the homepage teaser (its NULL duration would otherwise
+        // sort first in MySQL, showing the 80,000 BDT plan before any starter option)
+        // and feature only fixed-term plans here — the full comparison lives on
+        // the dedicated Membership Plans page.
+        $plans = MembershipPlan::where('is_active', true)
+            ->where('is_lifetime', false)
+            ->orderBy('duration_in_months')
+            ->limit(3)
+            ->get();
         $images = GalleryImage::where('is_active', true)->orderBy('sort_order')->limit(6)->get();
         $trainers = User::role('Trainer')->with('trainerProfile')->limit(3)->get();
         $stats = [
@@ -41,7 +49,12 @@ class PublicController extends Controller
 
     public function membershipPlans()
     {
-        $plans = MembershipPlan::where('is_active', true)->orderBy('duration_in_months')->get();
+        // Lifetime's duration_in_months is NULL, which MySQL sorts before any
+        // number — order NULLs last so Lifetime displays after the fixed-term
+        // plans instead of before Monthly.
+        $plans = MembershipPlan::where('is_active', true)
+            ->orderByRaw('duration_in_months IS NULL, duration_in_months ASC')
+            ->get();
 
         return view('public.membership-plans', compact('plans'));
     }

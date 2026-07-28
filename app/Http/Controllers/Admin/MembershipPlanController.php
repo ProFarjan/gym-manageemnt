@@ -10,7 +10,12 @@ class MembershipPlanController extends Controller
 {
     public function index()
     {
-        $plans = MembershipPlan::withCount('members')->orderBy('duration_in_months')->get();
+        // duration_in_months is NULL for Lifetime, which MySQL sorts before any
+        // number by default — order NULLs last so Lifetime lists after the
+        // fixed-term plans instead of before Monthly.
+        $plans = MembershipPlan::withCount('members')
+            ->orderByRaw('duration_in_months IS NULL, duration_in_months ASC')
+            ->get();
 
         return view('admin.membership-plans.index', compact('plans'));
     }
