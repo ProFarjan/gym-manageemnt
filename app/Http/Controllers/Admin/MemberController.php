@@ -97,15 +97,9 @@ class MemberController extends Controller
             'payments.paymentAccount',
             'memberTrainingPackages.package',
             'memberTrainingPackages.trainer',
-            'zkTecoSyncLogs' => fn ($q) => $q->latest(),
         ]);
 
-        $trainingPackages = PersonalTrainingPackage::where('is_active', true)->get();
-        $trainers = User::role('Trainer')->get();
-        $paymentAccounts = PaymentAccount::where('is_active', true)->get();
-        $recentAttendance = $member->attendances()->latest('check_in')->limit(15)->get();
-
-        return view('admin.members.show', compact('member', 'trainingPackages', 'trainers', 'paymentAccounts', 'recentAttendance'));
+        return view('admin.members.show', compact('member'));
     }
 
     /**

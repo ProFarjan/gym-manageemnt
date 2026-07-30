@@ -27,31 +27,33 @@
         </tbody>
     </table>
 </div>
-@can('personal_training.create')
-    <div class="card-body border-top">
-        <form method="POST" action="{{ route('admin.members.training-packages.store', $member) }}" class="row g-2 align-items-end">
-            @csrf
-            <div class="col-md-5">
-                <label class="form-label">Assign Package</label>
-                <select name="personal_training_package_id" class="form-select" required>
-                    <option value="">Select a package</option>
-                    @foreach ($trainingPackages as $tp)
-                        <option value="{{ $tp->id }}">{{ $tp->name }} ({{ $tp->sessions_count }} sessions)</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-5">
-                <label class="form-label">Trainer</label>
-                <select name="trainer_id" class="form-select">
-                    <option value="">—</option>
-                    @foreach ($trainers as $trainer)
-                        <option value="{{ $trainer->id }}">{{ $trainer->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Assign</button>
-            </div>
-        </form>
-    </div>
-@endcan
+@if ($showAssignForm ?? true)
+    @can('personal_training.create')
+        <div class="card-body border-top">
+            <form method="POST" action="{{ route('admin.members.training-packages.store', $member) }}" class="row g-2 align-items-end">
+                @csrf
+                <div class="col-md-5">
+                    <label class="form-label">Assign Package</label>
+                    <select name="personal_training_package_id" class="form-select" required>
+                        <option value="">Select a package</option>
+                        @foreach ($trainingPackages as $tp)
+                            <option value="{{ $tp->id }}">{{ $tp->name }} ({{ $tp->sessions_count }} sessions)</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Trainer</label>
+                    <select name="trainer_id" class="form-select">
+                        <option value="">—</option>
+                        @foreach ($trainers as $trainer)
+                            <option value="{{ $trainer->id }}">{{ $trainer->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Assign</button>
+                </div>
+            </form>
+        </div>
+    @endcan
+@endif
