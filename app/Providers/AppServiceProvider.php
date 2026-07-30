@@ -6,6 +6,7 @@ use App\Models\Member;
 use App\Models\User;
 use App\Notifications\Channels\SmsChannel;
 use App\Observers\MemberObserver;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
@@ -33,6 +34,15 @@ class AppServiceProvider extends ServiceProvider
         Member::observe(MemberObserver::class);
 
         Notification::extend('sms', fn ($app) => new SmsChannel);
+
+        // Neither the staff admin dashboard (route name "admin.dashboard") nor the
+        // member portal dashboard ("member.dashboard") is literally named "dashboard",
+        // so Laravel's default guest-middleware redirect falls through to the "home"
+        // route (the public marketing site) whenever an already-authenticated user
+        // hits a login page. Route by request path instead.
+        RedirectIfAuthenticated::redirectUsing(fn ($request) => $request->is('member/login')
+            ? route('member.dashboard')
+            : route('admin.dashboard'));
 
         $this->applySettingsOverrides();
     }
