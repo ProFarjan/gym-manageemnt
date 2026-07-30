@@ -144,216 +144,26 @@
 
     <div class="card">
         <div class="card-header">Payment History</div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead>
-                    <tr><th>Date</th><th>Type</th><th>Amount</th><th>Discount</th><th>Method</th><th>Account</th><th>Status</th><th></th></tr>
-                </thead>
-                <tbody>
-                    @forelse ($member->payments as $payment)
-                        <tr>
-                            <td>{{ $payment->created_at->format('d M Y') }}</td>
-                            <td>{{ ucfirst(str_replace('_', ' ', $payment->type)) }}</td>
-                            <td>{{ number_format($payment->amount, 2) }}</td>
-                            <td>{{ $payment->discount_amount > 0 ? number_format($payment->discount_amount, 2) : '—' }}</td>
-                            <td>{{ ucfirst($payment->method) }}</td>
-                            <td>{{ $payment->paymentAccount->name }}</td>
-                            <td>
-                                <span class="badge bg-{{ $payment->status === 'refunded' ? 'danger' : 'success' }}">{{ ucfirst($payment->status) }}</span>
-                            </td>
-                            <td class="text-nowrap">
-                                <a href="{{ route('admin.payments.receipt', $payment) }}" target="_blank" class="btn btn-sm btn-outline-secondary">Receipt</a>
-                                @can('payments.update')
-                                    @if ($payment->status !== 'refunded')
-                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#refund-{{ $payment->id }}">Refund</button>
-                                    @endif
-                                @endcan
-                            </td>
-                        </tr>
-                        @if ($payment->status !== 'refunded')
-                            <tr class="collapse" id="refund-{{ $payment->id }}">
-                                <td colspan="8" class="bg-light">
-                                    <form method="POST" action="{{ route('admin.payments.refund', $payment) }}" class="d-flex gap-2 align-items-end">
-                                        @csrf
-                                        <div>
-                                            <label class="form-label small mb-0">Refund Amount</label>
-                                            <input type="number" step="0.01" name="refund_amount" value="{{ $payment->amount }}" max="{{ $payment->amount }}" class="form-control form-control-sm" required>
-                                        </div>
-                                        <button class="btn btn-sm btn-danger" onclick="return confirm('Confirm refund?');">Confirm Refund</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endif
-                    @empty
-                        <tr><td colspan="8" class="text-center text-muted py-3">No payments recorded yet.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        @include('admin.members.partials.payments', ['member' => $member])
         @can('payments.create')
             <div class="card-body border-top">
-                <h6>Record Payment</h6>
-                <form method="POST" action="{{ route('admin.members.payments.store', $member) }}" class="row g-2 align-items-end">
-                    @csrf
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0">Type</label>
-                        <select name="type" class="form-select form-select-sm" required>
-                            <option value="monthly">Monthly</option>
-                            <option value="admission">Admission</option>
-                            <option value="package">Package</option>
-                            <option value="renewal">Renewal</option>
-                            <option value="personal_training">Personal Training</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0">Account</label>
-                        <select name="payment_account_id" class="form-select form-select-sm" required>
-                            @foreach ($paymentAccounts as $account)
-                                <option value="{{ $account->id }}">{{ $account->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0">Amount</label>
-                        <input type="number" step="0.01" name="amount" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0">Discount</label>
-                        <input type="number" step="0.01" name="discount_amount" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0">Discount Reason</label>
-                        <input type="text" name="discount_reason" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-1">
-                        <label class="form-label small mb-0">Periods</label>
-                        <input type="number" name="periods" value="1" min="1" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-primary btn-sm w-100">Save</button>
-                    </div>
-                </form>
-                <div class="form-text">"Periods" covers multiple billing cycles at once (e.g. catching up 2 missed months). Only applies to Monthly/Admission/Package/Renewal types.</div>
+                @include('admin.members.partials.pay-due', ['member' => $member, 'paymentAccounts' => $paymentAccounts])
             </div>
         @endcan
     </div>
 
     <div class="card mt-3">
         <div class="card-header">Personal Training Packages</div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead>
-                    <tr><th>Package</th><th>Trainer</th><th>Sessions</th><th>Expires</th><th></th></tr>
-                </thead>
-                <tbody>
-                    @forelse ($member->memberTrainingPackages as $assignment)
-                        <tr>
-                            <td>{{ $assignment->package->name }}</td>
-                            <td>{{ $assignment->trainer?->name ?? '—' }}</td>
-                            <td>{{ $assignment->sessions_used }} / {{ $assignment->package->sessions_count }}</td>
-                            <td>{{ $assignment->expires_at->format('d M Y') }} @if ($assignment->isExpired())<span class="badge bg-secondary">Expired</span>@endif</td>
-                            <td>
-                                @can('personal_training.update')
-                                    @if (!$assignment->isExpired() && $assignment->sessionsRemaining() > 0)
-                                        <form method="POST" action="{{ route('admin.training-packages.log-session', $assignment) }}">
-                                            @csrf
-                                            <button class="btn btn-sm btn-outline-primary">Log Session</button>
-                                        </form>
-                                    @endif
-                                @endcan
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="text-center text-muted py-3">No training packages assigned.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @can('personal_training.create')
-            <div class="card-body border-top">
-                <form method="POST" action="{{ route('admin.members.training-packages.store', $member) }}" class="row g-2 align-items-end">
-                    @csrf
-                    <div class="col-md-5">
-                        <label class="form-label">Assign Package</label>
-                        <select name="personal_training_package_id" class="form-select" required>
-                            <option value="">Select a package</option>
-                            @foreach ($trainingPackages as $tp)
-                                <option value="{{ $tp->id }}">{{ $tp->name }} ({{ $tp->sessions_count }} sessions)</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label">Trainer</label>
-                        <select name="trainer_id" class="form-select">
-                            <option value="">—</option>
-                            @foreach ($trainers as $trainer)
-                                <option value="{{ $trainer->id }}">{{ $trainer->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">Assign</button>
-                    </div>
-                </form>
-            </div>
-        @endcan
+        @include('admin.members.partials.training', ['member' => $member, 'trainingPackages' => $trainingPackages, 'trainers' => $trainers])
     </div>
 
     <div class="card mt-3">
         <div class="card-header">Attendance History</div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead>
-                    <tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Duration</th><th>Source</th></tr>
-                </thead>
-                <tbody>
-                    @forelse ($recentAttendance as $attendance)
-                        <tr>
-                            <td>{{ $attendance->check_in->format('d M Y') }}</td>
-                            <td>{{ $attendance->check_in->format('h:i A') }}</td>
-                            <td>
-                                @if ($attendance->check_out)
-                                    {{ $attendance->check_out->format('h:i A') }}
-                                @else
-                                    <span class="badge bg-info">Still In</span>
-                                @endif
-                            </td>
-                            <td>{{ $attendance->duration_minutes ? $attendance->duration_minutes.' min' : '—' }}</td>
-                            <td class="text-capitalize">{{ $attendance->source }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="text-center text-muted py-3">No attendance recorded yet.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        @include('admin.members.partials.attendance', ['recentAttendance' => $recentAttendance])
     </div>
 
     <div class="card mt-3">
         <div class="card-header">ZKTeco Device Sync</div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead>
-                    <tr><th>Action</th><th>Status</th><th>Attempts</th><th>Synced At</th><th>Error</th></tr>
-                </thead>
-                <tbody>
-                    @forelse ($member->zkTecoSyncLogs as $log)
-                        <tr>
-                            <td>{{ ucfirst(str_replace('_', ' ', $log->action)) }}</td>
-                            <td>
-                                <span class="badge bg-{{ match($log->status) { 'success' => 'success', 'failed' => 'danger', default => 'secondary' } }}">
-                                    {{ ucfirst($log->status) }}
-                                </span>
-                            </td>
-                            <td>{{ $log->attempts }}</td>
-                            <td>{{ $log->synced_at?->format('d M Y h:i A') ?? '—' }}</td>
-                            <td class="small text-danger">{{ $log->error_message }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="text-center text-muted py-3">No device sync activity yet.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        @include('admin.members.partials.zkteco', ['member' => $member])
     </div>
 @endsection

@@ -84,6 +84,23 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
         Route::get('/members/{member}', [AdminMemberController::class, 'show'])->name('members.show');
     });
 
+    // Member Action Panels (AJAX modal fragments, shown from the Members index dropdown)
+    Route::middleware('permission:payments.create')->group(function () {
+        Route::get('/members/{member}/pay-due', [AdminMemberController::class, 'payDuePanel'])->name('members.pay-due');
+    });
+    Route::middleware('permission:payments.view')->group(function () {
+        Route::get('/members/{member}/payments-panel', [AdminMemberController::class, 'paymentsPanel'])->name('members.payments-panel');
+    });
+    Route::middleware('permission:members.view')->group(function () {
+        Route::get('/members/{member}/attendance-panel', [AdminMemberController::class, 'attendancePanel'])->name('members.attendance-panel');
+    });
+    Route::middleware('permission:personal_training.view')->group(function () {
+        Route::get('/members/{member}/training-panel', [AdminMemberController::class, 'trainingPanel'])->name('members.training-panel');
+    });
+    Route::middleware('permission:settings.view')->group(function () {
+        Route::get('/members/{member}/zkteco-panel', [AdminMemberController::class, 'zkTecoPanel'])->name('members.zkteco-panel');
+    });
+
     // Membership Plans
     Route::middleware('permission:membership_plans.view')->group(function () {
         Route::get('/membership-plans', [MembershipPlanController::class, 'index'])->name('membership-plans.index');

@@ -30,6 +30,9 @@
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
+    @if ($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
 
     <div class="card">
         <div class="table-responsive">
@@ -62,7 +65,40 @@
                             </td>
                             <td>{{ $member->due_date?->format('d M Y') ?? '—' }}</td>
                             <td>
-                                <a href="{{ route('admin.members.show', $member) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Action
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        @can('members.view')
+                                            <li><a class="dropdown-item" href="{{ route('admin.members.show', $member) }}">View</a></li>
+                                        @endcan
+                                        @can('members.update')
+                                            <li><a class="dropdown-item" href="{{ route('admin.members.edit', $member) }}">Edit</a></li>
+                                        @endcan
+                                        @can('payments.create')
+                                            <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.pay-due', $member) }}" data-modal-title="Pay Due — {{ $member->full_name }}">Pay Due</a></li>
+                                        @endcan
+                                        @can('payments.view')
+                                            <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.payments-panel', $member) }}" data-modal-title="Payment History — {{ $member->full_name }}">View Payments</a></li>
+                                        @endcan
+                                        @can('members.view')
+                                            <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.attendance-panel', $member) }}" data-modal-title="Attendance Records — {{ $member->full_name }}">Attendance Records</a></li>
+                                        @endcan
+                                        @can('personal_training.view')
+                                            <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.training-panel', $member) }}" data-modal-title="Training Packages — {{ $member->full_name }}">Training</a></li>
+                                        @endcan
+                                        @can('settings.view')
+                                            <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.zkteco-panel', $member) }}" data-modal-title="ZKTeco Sync — {{ $member->full_name }}">ZKTeco Sync</a></li>
+                                        @endcan
+                                        @can('members.delete')
+                                            @if ($member->status === 'pending')
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" data-delete-url="{{ route('admin.members.destroy', $member) }}" data-delete-name="{{ $member->full_name }}">Delete</a></li>
+                                            @endif
+                                        @endcan
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -77,5 +113,41 @@
 
     <div class="mt-3">
         {{ $members->links() }}
+    </div>
+
+    <div class="modal fade" id="memberActionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="memberActionModalLabel">&nbsp;</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="memberActionModalBody">
+                    <div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="memberDeleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Member</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" id="memberDeleteForm">
+                    @csrf
+                    @method('DELETE')
+                    <div class="modal-body">
+                        Are you sure you want to delete <strong id="memberDeleteName"></strong>'s pending registration? This cannot be undone.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 @endsection

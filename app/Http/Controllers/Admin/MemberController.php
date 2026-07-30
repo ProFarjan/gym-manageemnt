@@ -109,6 +109,58 @@ class MemberController extends Controller
     }
 
     /**
+     * Modal panel: record-payment form.
+     */
+    public function payDuePanel(Member $member)
+    {
+        $paymentAccounts = PaymentAccount::where('is_active', true)->get();
+
+        return view('admin.members.partials.pay-due', compact('member', 'paymentAccounts'));
+    }
+
+    /**
+     * Modal panel: payment history + refund.
+     */
+    public function paymentsPanel(Member $member)
+    {
+        $member->load('payments.paymentAccount');
+
+        return view('admin.members.partials.payments', compact('member'));
+    }
+
+    /**
+     * Modal panel: recent attendance.
+     */
+    public function attendancePanel(Member $member)
+    {
+        $recentAttendance = $member->attendances()->latest('check_in')->limit(15)->get();
+
+        return view('admin.members.partials.attendance', compact('recentAttendance'));
+    }
+
+    /**
+     * Modal panel: training packages + assign form.
+     */
+    public function trainingPanel(Member $member)
+    {
+        $member->load(['memberTrainingPackages.package', 'memberTrainingPackages.trainer']);
+        $trainingPackages = PersonalTrainingPackage::where('is_active', true)->get();
+        $trainers = User::role('Trainer')->get();
+
+        return view('admin.members.partials.training', compact('member', 'trainingPackages', 'trainers'));
+    }
+
+    /**
+     * Modal panel: ZKTeco sync log.
+     */
+    public function zkTecoPanel(Member $member)
+    {
+        $member->load(['zkTecoSyncLogs' => fn ($q) => $q->latest()]);
+
+        return view('admin.members.partials.zkteco', compact('member'));
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Member $member)

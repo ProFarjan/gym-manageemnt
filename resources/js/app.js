@@ -115,4 +115,46 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         });
     });
+
+    const memberActionModalEl = document.getElementById('memberActionModal');
+    if (memberActionModalEl) {
+        const memberActionModal = new window.Bootstrap.Modal(memberActionModalEl);
+        const modalTitle = document.getElementById('memberActionModalLabel');
+        const modalBody = document.getElementById('memberActionModalBody');
+
+        document.querySelectorAll('[data-modal-url]').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                modalTitle.textContent = link.dataset.modalTitle || '';
+                modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
+                memberActionModal.show();
+
+                fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then((response) => {
+                        if (!response.ok) throw new Error('Request failed');
+                        return response.text();
+                    })
+                    .then((html) => { modalBody.innerHTML = html; })
+                    .catch(() => {
+                        modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
+                    });
+            });
+        });
+    }
+
+    const memberDeleteModalEl = document.getElementById('memberDeleteModal');
+    if (memberDeleteModalEl) {
+        const memberDeleteModal = new window.Bootstrap.Modal(memberDeleteModalEl);
+        const deleteForm = document.getElementById('memberDeleteForm');
+        const deleteName = document.getElementById('memberDeleteName');
+
+        document.querySelectorAll('[data-delete-url]').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                deleteForm.action = link.dataset.deleteUrl;
+                deleteName.textContent = link.dataset.deleteName || 'this member';
+                memberDeleteModal.show();
+            });
+        });
+    }
 });

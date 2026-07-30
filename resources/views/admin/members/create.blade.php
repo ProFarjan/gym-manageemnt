@@ -120,15 +120,6 @@
                     <label class="form-label">Discount Reason</label>
                     <input type="text" name="discount_reason" value="{{ old('discount_reason') }}" class="form-control" placeholder="e.g. Student discount">
                 </div>
-                <div class="col-md-12">
-                    <div class="form-check">
-                        <input type="checkbox" name="activate_now" value="1" id="activate_now" class="form-check-input" @checked(old('activate_now'))>
-                        <label for="activate_now" class="form-check-label">
-                            Payment collected now — activate membership immediately
-                        </label>
-                    </div>
-                    <div class="form-text">Leave unchecked to save as <strong>Pending</strong> until payment is confirmed.</div>
-                </div>
             </div>
         </div>
 
