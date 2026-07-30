@@ -85,4 +85,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    document.querySelectorAll('input[type="file"][data-preview]').forEach((input) => {
+        const preview = document.getElementById(input.dataset.preview);
+        if (!preview) return;
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        });
+    });
 });

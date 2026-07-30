@@ -23,39 +23,42 @@
             <div class="card-body row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Full Name *</label>
-                    <input type="text" name="full_name" value="{{ old('full_name') }}" class="form-control" required>
+                    <input type="text" name="full_name" value="{{ old('full_name') }}" class="form-control" placeholder="e.g. Jane Rahman" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Mobile Number *</label>
-                    <input type="text" name="mobile_number" value="{{ old('mobile_number') }}" class="form-control" required>
+                    <input type="text" name="mobile_number" value="{{ old('mobile_number') }}" class="form-control" placeholder="e.g. 01XXXXXXXXX" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" class="form-control">
+                    <input type="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="name@example.com">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Date of Birth</label>
-                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" class="form-control">
+                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" class="form-control"
+                           min="{{ now()->subYears(100)->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}">
                 </div>
                 <div class="col-md-12">
                     <label class="form-label">Address</label>
-                    <textarea name="address" class="form-control" rows="2">{{ old('address') }}</textarea>
+                    <textarea name="address" class="form-control" rows="1" placeholder="House, Road, Area, City">{{ old('address') }}</textarea>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">NID / Birth Registration Number</label>
-                    <input type="text" name="nid_number" value="{{ old('nid_number') }}" class="form-control">
+                    <input type="text" name="nid_number" value="{{ old('nid_number') }}" class="form-control" placeholder="NID or birth certificate number">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Emergency Contact</label>
-                    <input type="text" name="emergency_contact" value="{{ old('emergency_contact') }}" class="form-control">
+                    <input type="text" name="emergency_contact" value="{{ old('emergency_contact') }}" class="form-control" placeholder="Name & phone number">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">NID Image</label>
-                    <input type="file" name="nid_image" class="form-control">
+                    <input type="file" name="nid_image" accept="image/*" class="form-control" data-preview="nidImagePreview">
+                    <img id="nidImagePreview" class="img-preview mt-2 d-none" alt="NID preview">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Member Photo</label>
-                    <input type="file" name="photo" class="form-control">
+                    <input type="file" name="photo" accept="image/*" class="form-control" data-preview="photoPreview">
+                    <img id="photoPreview" class="img-preview mt-2 d-none" alt="Member photo preview">
                 </div>
             </div>
         </div>
@@ -65,11 +68,11 @@
             <div class="card-body row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Height (cm)</label>
-                    <input type="number" step="0.01" name="height" value="{{ old('height') }}" class="form-control">
+                    <input type="number" step="0.01" name="height" value="{{ old('height') }}" class="form-control" placeholder="e.g. 165">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Weight (kg)</label>
-                    <input type="number" step="0.01" name="weight" value="{{ old('weight') }}" class="form-control">
+                    <input type="number" step="0.01" name="weight" value="{{ old('weight') }}" class="form-control" placeholder="e.g. 60">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Blood Group</label>
@@ -82,11 +85,11 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Fitness Goal</label>
-                    <input type="text" name="fitness_goal" value="{{ old('fitness_goal') }}" class="form-control">
+                    <input type="text" name="fitness_goal" value="{{ old('fitness_goal') }}" class="form-control" placeholder="e.g. Weight loss, muscle gain">
                 </div>
                 <div class="col-md-12">
                     <label class="form-label">Medical Conditions / Allergies</label>
-                    <textarea name="medical_conditions" class="form-control" rows="2">{{ old('medical_conditions') }}</textarea>
+                    <textarea name="medical_conditions" class="form-control" rows="1" placeholder="Any conditions we should know about">{{ old('medical_conditions') }}</textarea>
                 </div>
             </div>
         </div>
@@ -107,11 +110,11 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Discount Amount</label>
-                    <input type="number" step="0.01" name="discount_amount" value="{{ old('discount_amount') }}" class="form-control">
+                    <input type="number" step="0.01" name="discount_amount" value="{{ old('discount_amount') }}" class="form-control" placeholder="0.00">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Discount Reason</label>
-                    <input type="text" name="discount_reason" value="{{ old('discount_reason') }}" class="form-control">
+                    <input type="text" name="discount_reason" value="{{ old('discount_reason') }}" class="form-control" placeholder="e.g. Student discount">
                 </div>
                 <div class="col-md-12">
                     <div class="form-check">
