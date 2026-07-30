@@ -1,5 +1,6 @@
 $bootstrap-icons-font-dir: "/fonts";
 @import "bootstrap-icons/font/bootstrap-icons";
+@import "flatpickr/dist/flatpickr.css";
 
 $admin-sidebar-width: 260px;
 $admin-sidebar-width-collapsed: 76px;
@@ -358,5 +359,81 @@ $admin-content-bg: #f4f5f9;
         object-fit: cover;
         border-radius: .5rem;
         border: 1px solid rgba(0, 0, 0, .1);
+    }
+
+    // ---------------------------------------------------------------
+    // Flatpickr (date of birth) theme
+    // ---------------------------------------------------------------
+
+    .flatpickr-calendar {
+        border-radius: .75rem;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, .14);
+        border: 1px solid rgba(0, 0, 0, .06);
+        font-family: inherit;
+    }
+
+    .flatpickr-months {
+        border-radius: .75rem .75rem 0 0;
+        overflow: hidden;
+        background: $admin-sidebar-bg;
+        padding: .5rem 0;
+    }
+
+    .flatpickr-months .flatpickr-month,
+    .flatpickr-current-month,
+    .flatpickr-current-month input.cur-year {
+        color: #fff;
+        fill: #fff;
+    }
+
+    .flatpickr-current-month .flatpickr-monthDropdown-months {
+        color: #fff;
+        background: transparent;
+
+        option { color: #212529; }
+    }
+
+    .flatpickr-prev-month svg,
+    .flatpickr-next-month svg {
+        fill: rgba(255, 255, 255, .8);
+    }
+
+    .flatpickr-prev-month:hover svg,
+    .flatpickr-next-month:hover svg {
+        fill: var(--gg-pink, #d6336c);
+    }
+
+    .flatpickr-weekdays {
+        background: $admin-sidebar-bg;
+    }
+
+    span.flatpickr-weekday {
+        background: $admin-sidebar-bg;
+        color: rgba(255, 255, 255, .6);
+        font-weight: 700;
+        font-size: .72rem;
+        text-transform: uppercase;
+    }
+
+    .flatpickr-day.today {
+        border-color: var(--gg-pink, #d6336c);
+    }
+
+    .flatpickr-day:hover,
+    .flatpickr-day.nextMonthDay:hover,
+    .flatpickr-day.prevMonthDay:hover {
+        background: var(--gg-pink-light, #ffe3ec);
+        border-color: var(--gg-pink-light, #ffe3ec);
+    }
+
+    .flatpickr-day.selected,
+    .flatpickr-day.selected:hover {
+        background: var(--gg-gradient, linear-gradient(135deg, #d6336c 0%, #ae3ec9 100%));
+        border-color: transparent;
+        color: #fff;
+    }
+
+    .numInputWrapper:hover {
+        background: rgba(255, 255, 255, .08);
     }
 }

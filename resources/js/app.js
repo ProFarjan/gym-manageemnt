@@ -3,6 +3,7 @@ import * as Bootstrap from 'bootstrap';
 import $ from 'jquery';
 import { Chart, registerables } from 'chart.js';
 import AOS from 'aos';
+import flatpickr from 'flatpickr';
 
 Chart.register(...registerables);
 
@@ -85,6 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    document.querySelectorAll('.dob-datepicker').forEach((input) => {
+        flatpickr(input, {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd M Y',
+            minDate: input.dataset.min || null,
+            maxDate: input.dataset.max || null,
+            allowInput: false,
+            disableMobile: true,
+        });
+    });
 
     document.querySelectorAll('input[type="file"][data-preview]').forEach((input) => {
         const preview = document.getElementById(input.dataset.preview);

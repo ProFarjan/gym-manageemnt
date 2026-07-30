@@ -22,11 +22,11 @@
             <div class="card-header">Personal Information</div>
             <div class="card-body row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Full Name *</label>
+                    <label class="form-label">Full Name <span class="text-danger">*</span></label>
                     <input type="text" name="full_name" value="{{ old('full_name') }}" class="form-control" placeholder="e.g. Jane Rahman" required>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Mobile Number *</label>
+                    <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
                     <input type="text" name="mobile_number" value="{{ old('mobile_number') }}" class="form-control" placeholder="e.g. 01XXXXXXXXX" required>
                 </div>
                 <div class="col-md-6">
@@ -35,8 +35,12 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Date of Birth</label>
-                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" class="form-control"
-                           min="{{ now()->subYears(100)->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                        <input type="text" name="date_of_birth" value="{{ old('date_of_birth') }}" class="form-control dob-datepicker"
+                               placeholder="Select date of birth" autocomplete="off"
+                               data-min="{{ now()->subYears(100)->format('Y-m-d') }}" data-max="{{ now()->format('Y-m-d') }}">
+                    </div>
                 </div>
                 <div class="col-md-12">
                     <label class="form-label">Address</label>
@@ -98,7 +102,7 @@
             <div class="card-header">Membership</div>
             <div class="card-body row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Plan *</label>
+                    <label class="form-label">Plan <span class="text-danger">*</span></label>
                     <select name="membership_plan_id" class="form-select" required>
                         <option value="">Select a plan</option>
                         @foreach ($plans as $plan)

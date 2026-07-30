@@ -15,11 +15,11 @@
         <div class="card mb-3">
             <div class="card-body row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Name *</label>
+                    <label class="form-label">Name <span class="text-danger">*</span></label>
                     <input type="text" name="name" value="{{ old('name', $trainer->name) }}" class="form-control" required>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Email *</label>
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
                     <input type="email" name="email" value="{{ old('email', $trainer->email) }}" class="form-control" required>
                 </div>
                 <div class="col-md-6">

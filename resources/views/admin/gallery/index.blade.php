@@ -18,7 +18,7 @@
             <form method="POST" action="{{ route('admin.gallery.store') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
                 @csrf
                 <div class="col-md-5">
-                    <label class="form-label">Image *</label>
+                    <label class="form-label">Image <span class="text-danger">*</span></label>
                     <input type="file" name="image" class="form-control" required>
                 </div>
                 <div class="col-md-4">

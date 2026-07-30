@@ -14,11 +14,11 @@
         <div class="card mb-3">
             <div class="card-body row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Name *</label>
+                    <label class="form-label">Name <span class="text-danger">*</span></label>
                     <input type="text" name="name" value="{{ old('name') }}" class="form-control" required>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Email *</label>
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
                     <input type="email" name="email" value="{{ old('email') }}" class="form-control" required>
                 </div>
                 <div class="col-md-6">
@@ -26,7 +26,7 @@
                     <input type="text" name="phone" value="{{ old('phone') }}" class="form-control">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Password *</label>
+                    <label class="form-label">Password <span class="text-danger">*</span></label>
                     <input type="password" name="password" class="form-control" required>
                 </div>
                 <div class="col-md-6">

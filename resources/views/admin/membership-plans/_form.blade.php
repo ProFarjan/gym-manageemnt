@@ -5,7 +5,7 @@
 <div class="card mb-3">
     <div class="card-body row g-3">
         <div class="col-md-6">
-            <label class="form-label">Plan Name *</label>
+            <label class="form-label">Plan Name <span class="text-danger">*</span></label>
             <input type="text" name="name" value="{{ $v('name') }}" class="form-control" required>
         </div>
         <div class="col-md-6 d-flex align-items-end">
@@ -19,11 +19,11 @@
             <input type="number" name="duration_in_months" value="{{ $v('duration_in_months') }}" class="form-control" min="1">
         </div>
         <div class="col-md-6">
-            <label class="form-label">Price (BDT) *</label>
+            <label class="form-label">Price (BDT) <span class="text-danger">*</span></label>
             <input type="number" step="0.01" name="price" value="{{ $v('price') }}" class="form-control" required>
         </div>
         <div class="col-md-4">
-            <label class="form-label">Admission Fee (BDT) *</label>
+            <label class="form-label">Admission Fee (BDT) <span class="text-danger">*</span></label>
             <input type="number" step="0.01" name="admission_fee" value="{{ $v('admission_fee', 2500) }}" class="form-control" required>
         </div>
         <div class="col-md-4">

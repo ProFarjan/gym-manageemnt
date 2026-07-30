@@ -6,7 +6,7 @@
 <div class="card mb-3">
     <div class="card-body row g-3">
         <div class="col-md-6">
-            <label class="form-label">Class Name *</label>
+            <label class="form-label">Class Name <span class="text-danger">*</span></label>
             <input type="text" name="name" value="{{ $v('name') }}" class="form-control" required>
         </div>
         <div class="col-md-6">
@@ -19,7 +19,7 @@
             </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label">Day of Week *</label>
+            <label class="form-label">Day of Week <span class="text-danger">*</span></label>
             <select name="day_of_week" class="form-select" required>
                 @foreach (['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as $day)
                     <option value="{{ $day }}" @selected($v('day_of_week') === $day)>{{ ucfirst($day) }}</option>
@@ -27,15 +27,15 @@
             </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label">Start Time *</label>
+            <label class="form-label">Start Time <span class="text-danger">*</span></label>
             <input type="time" name="start_time" value="{{ $vTime('start_time') }}" class="form-control" required>
         </div>
         <div class="col-md-4">
-            <label class="form-label">End Time *</label>
+            <label class="form-label">End Time <span class="text-danger">*</span></label>
             <input type="time" name="end_time" value="{{ $vTime('end_time') }}" class="form-control" required>
         </div>
         <div class="col-md-6">
-            <label class="form-label">Capacity *</label>
+            <label class="form-label">Capacity <span class="text-danger">*</span></label>
             <input type="number" name="capacity" value="{{ $v('capacity', 20) }}" class="form-control" min="1" required>
         </div>
         <div class="col-md-6 d-flex align-items-end">

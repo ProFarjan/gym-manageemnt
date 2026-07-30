@@ -56,6 +56,7 @@ class MemberController extends Controller
     public function store(StoreMemberRequest $request)
     {
         $data = $request->validated();
+        $data['discount_amount'] = $data['discount_amount'] ?? 0;
         $plan = MembershipPlan::findOrFail($data['membership_plan_id']);
 
         $member = new Member($data);
@@ -123,6 +124,7 @@ class MemberController extends Controller
     public function update(UpdateMemberRequest $request, Member $member)
     {
         $data = $request->validated();
+        $data['discount_amount'] = $data['discount_amount'] ?? 0;
 
         $member->fill($data);
 
