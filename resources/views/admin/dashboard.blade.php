@@ -6,70 +6,28 @@
     <h1 class="h4 mb-4">Welcome, {{ auth()->user()->name }}</h1>
 
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Total Members</p>
-                    <p class="h4 mb-0">{{ number_format($stats['total_members']) }}</p>
+        @foreach ([
+            ['label' => 'Total Members', 'value' => number_format($stats['total_members']), 'icon' => 'people-fill', 'accent' => 'primary'],
+            ['label' => 'Active Members', 'value' => number_format($stats['active_members']), 'icon' => 'person-check-fill', 'accent' => 'success'],
+            ['label' => 'Expired Members', 'value' => number_format($stats['expired_members']), 'icon' => 'person-x-fill', 'accent' => 'secondary'],
+            ['label' => 'Closed Members', 'value' => number_format($stats['closed_members']), 'icon' => 'person-dash-fill', 'accent' => 'dark'],
+            ['label' => "Today's Attendance", 'value' => number_format($stats['today_attendance']), 'icon' => 'calendar-check-fill', 'accent' => 'info'],
+            ['label' => "Today's Collection", 'value' => number_format($stats['today_collection'], 2), 'icon' => 'cash-coin', 'accent' => 'primary'],
+            ['label' => 'Monthly Collection', 'value' => number_format($stats['monthly_collection'], 2), 'icon' => 'graph-up-arrow', 'accent' => 'success'],
+            ['label' => 'Upcoming Renewals (7d)', 'value' => number_format($stats['upcoming_renewals']), 'icon' => 'bell-fill', 'accent' => 'warning'],
+        ] as $stat)
+            <div class="col-6 col-md-3">
+                <div class="card stat-card stat-card--{{ $stat['accent'] }}">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="stat-card-icon"><i class="bi bi-{{ $stat['icon'] }}"></i></div>
+                        <div>
+                            <p class="stat-card-label mb-1">{{ $stat['label'] }}</p>
+                            <p class="stat-card-value mb-0">{{ $stat['value'] }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Active Members</p>
-                    <p class="h4 mb-0 text-success">{{ number_format($stats['active_members']) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Expired Members</p>
-                    <p class="h4 mb-0 text-secondary">{{ number_format($stats['expired_members']) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Closed Members</p>
-                    <p class="h4 mb-0 text-dark">{{ number_format($stats['closed_members']) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Today's Attendance</p>
-                    <p class="h4 mb-0">{{ number_format($stats['today_attendance']) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Today's Collection</p>
-                    <p class="h4 mb-0">{{ number_format($stats['today_collection'], 2) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Monthly Collection</p>
-                    <p class="h4 mb-0">{{ number_format($stats['monthly_collection'], 2) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted small mb-1">Upcoming Renewals (7d)</p>
-                    <p class="h4 mb-0 text-warning">{{ number_format($stats['upcoming_renewals']) }}</p>
-                </div>
-            </div>
-        </div>
+        @endforeach
     </div>
 
     <div class="row g-3">

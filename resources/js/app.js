@@ -53,4 +53,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         counters.forEach((el) => observer.observe(el));
     }
+
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        const body = document.body;
+        const isMobile = () => window.innerWidth < 992;
+
+        if (!isMobile() && localStorage.getItem('adminSidebarCollapsed') === '1') {
+            body.classList.add('sidebar-collapsed');
+        }
+
+        sidebarToggle.addEventListener('click', () => {
+            if (isMobile()) {
+                body.classList.toggle('sidebar-open');
+            } else {
+                const collapsed = body.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('adminSidebarCollapsed', collapsed ? '1' : '0');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (isMobile() && body.classList.contains('sidebar-open') &&
+                !e.target.closest('.admin-sidebar') && !e.target.closest('#sidebarToggle')) {
+                body.classList.remove('sidebar-open');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                body.classList.remove('sidebar-open');
+            }
+        });
+    }
 });
