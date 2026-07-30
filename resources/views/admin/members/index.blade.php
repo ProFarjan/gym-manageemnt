@@ -45,14 +45,28 @@
                         <th>Plan</th>
                         <th>Status</th>
                         <th>Due Date</th>
-                        <th></th>
+                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($members as $member)
                         <tr>
                             <td>{{ $member->admission_id }}</td>
-                            <td>{{ $member->full_name }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if ($member->photo_path)
+                                        <img src="{{ asset('storage/'.$member->photo_path) }}" alt="" class="member-avatar">
+                                    @else
+                                        @php
+                                            $initial = strtoupper(substr($member->full_name, 0, 1)) ?: '?';
+                                            $avatarColors = ['e64980','ae3ec9','7048e8','4263eb','1971c2','0c8599','2f9e44','66a80f','f08c00','e8590c'];
+                                            $avatarColor = $avatarColors[ord($initial) % count($avatarColors)];
+                                        @endphp
+                                        <span class="member-avatar member-avatar-initials" style="background-color: #{{ $avatarColor }};">{{ $initial }}</span>
+                                    @endif
+                                    <span>{{ $member->full_name }}</span>
+                                </div>
+                            </td>
                             <td>{{ $member->mobile_number }}</td>
                             <td>{{ $member->membershipPlan?->name ?? '—' }}</td>
                             <td>
@@ -64,7 +78,7 @@
                                 } }}">{{ ucfirst($member->status) }}</span>
                             </td>
                             <td>{{ $member->due_date?->format('d M Y') ?? '—' }}</td>
-                            <td>
+                            <td class="text-end">
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Action

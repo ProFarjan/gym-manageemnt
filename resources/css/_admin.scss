@@ -361,6 +361,23 @@ $admin-content-bg: #f4f5f9;
         border: 1px solid rgba(0, 0, 0, .1);
     }
 
+    .member-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .member-avatar-initials {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: .85rem;
+    }
+
     // ---------------------------------------------------------------
     // Flatpickr (date of birth) theme
     // ---------------------------------------------------------------
