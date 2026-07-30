@@ -116,6 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    document.querySelectorAll('.table-responsive .dropdown-toggle').forEach((toggleEl) => {
+        new window.Bootstrap.Dropdown(toggleEl, {
+            popperConfig: { strategy: 'fixed' },
+        });
+    });
+
     const memberActionModalEl = document.getElementById('memberActionModal');
     if (memberActionModalEl) {
         const memberActionModal = new window.Bootstrap.Modal(memberActionModalEl);

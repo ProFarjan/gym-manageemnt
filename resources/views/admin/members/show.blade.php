@@ -51,7 +51,7 @@
 
     <div class="row g-3 mb-3">
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-primary-subtle border-0">
                 <div class="card-body">
                     <p class="text-muted small mb-1">Status</p>
                     <span class="badge bg-{{ match($member->status) {
@@ -61,7 +61,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-info-subtle border-0">
                 <div class="card-body">
                     <p class="text-muted small mb-1">Plan</p>
                     <p class="mb-0">{{ $member->membershipPlan?->name ?? '—' }}</p>
@@ -69,7 +69,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-success-subtle border-0">
                 <div class="card-body">
                     <p class="text-muted small mb-1">Admission Date</p>
                     <p class="mb-0">{{ $member->admission_date?->format('d M Y') ?? '—' }}</p>
@@ -77,7 +77,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-warning-subtle border-0">
                 <div class="card-body">
                     <p class="text-muted small mb-1">Due Date</p>
                     <p class="mb-0">{{ $member->due_date?->format('d M Y') ?? ($member->isLifetime() ? 'Lifetime' : '—') }}</p>

@@ -94,9 +94,8 @@ class MemberController extends Controller
         $member->load([
             'membershipPlan',
             'registeredBy',
-            'payments.paymentAccount',
-            'memberTrainingPackages.package',
-            'memberTrainingPackages.trainer',
+            'payments' => fn ($q) => $q->with('paymentAccount')->latest('id')->limit(10),
+            'memberTrainingPackages' => fn ($q) => $q->with(['package', 'trainer'])->latest('id')->limit(20),
         ]);
 
         return view('admin.members.show', compact('member'));
