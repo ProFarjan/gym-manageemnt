@@ -39,7 +39,7 @@ class UpdateMemberRequest extends FormRequest
             'fitness_goal' => ['nullable', 'string', 'max:255'],
             'medical_conditions' => ['nullable', 'string'],
 
-            'membership_plan_id' => ['required', 'exists:membership_plans,id'],
+            'membership_plan_id' => [$member->status === 'pending' ? 'required' : 'nullable', 'exists:membership_plans,id'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'discount_reason' => ['required_with:discount_amount', 'nullable', 'string', 'max:255'],
         ];

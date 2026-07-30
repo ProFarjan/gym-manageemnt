@@ -74,7 +74,6 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     Route::middleware('permission:members.update')->group(function () {
         Route::get('/members/{member}/edit', [AdminMemberController::class, 'edit'])->name('members.edit');
         Route::put('/members/{member}', [AdminMemberController::class, 'update'])->name('members.update');
-        Route::post('/members/{member}/approve', [AdminMemberController::class, 'approve'])->name('members.approve');
         Route::post('/members/{member}/close', [AdminMemberController::class, 'close'])->name('members.close');
     });
     Route::middleware('permission:members.delete')->group(function () {

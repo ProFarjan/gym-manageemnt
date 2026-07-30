@@ -11,7 +11,6 @@ use App\Models\PaymentAccount;
 use App\Models\PersonalTrainingPackage;
 use App\Models\User;
 use App\Services\AdmissionIdGenerator;
-use App\Services\MembershipCycle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -57,20 +56,12 @@ class MemberController extends Controller
     {
         $data = $request->validated();
         $data['discount_amount'] = $data['discount_amount'] ?? 0;
-        $plan = MembershipPlan::findOrFail($data['membership_plan_id']);
 
         $member = new Member($data);
         $member->admission_id = AdmissionIdGenerator::generate();
         $member->registration_type = 'admin';
         $member->registered_by = $request->user()->id;
-
-        if ($request->boolean('activate_now')) {
-            $member->status = 'active';
-            $member->admission_date = now();
-            $member->due_date = MembershipCycle::nextDueDate(now(), $plan);
-        } else {
-            $member->status = 'pending';
-        }
+        $member->status = 'pending';
 
         if ($request->hasFile('nid_image')) {
             $member->nid_image_path = $request->file('nid_image')->store('members/nid', 'public');
@@ -107,8 +98,10 @@ class MemberController extends Controller
     public function payDuePanel(Member $member)
     {
         $paymentAccounts = PaymentAccount::where('is_active', true)->get();
+        $trainingPackages = PersonalTrainingPackage::where('is_active', true)->get();
+        $lastPayment = $member->payments()->latest('id')->first();
 
-        return view('admin.members.partials.pay-due', compact('member', 'paymentAccounts'));
+        return view('admin.members.partials.pay-due', compact('member', 'paymentAccounts', 'trainingPackages', 'lastPayment'));
     }
 
     /**
@@ -205,23 +198,6 @@ class MemberController extends Controller
         $member->delete();
 
         return redirect()->route('admin.members.index')->with('status', 'Member registration deleted.');
-    }
-
-    /**
-     * Approve a pending registration after payment is received.
-     */
-    public function approve(Member $member)
-    {
-        if ($member->status !== 'pending') {
-            return back()->withErrors(['member' => 'Only pending members can be approved.']);
-        }
-
-        $member->status = 'active';
-        $member->admission_date = now();
-        $member->due_date = MembershipCycle::nextDueDate(now(), $member->membershipPlan);
-        $member->save();
-
-        return back()->with('status', "Member {$member->admission_id} approved and activated.");
     }
 
     /**

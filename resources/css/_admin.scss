@@ -382,6 +382,24 @@ $admin-content-bg: #f4f5f9;
         font-size: .85rem;
     }
 
+    #memberActionModal .modal-header {
+        background: var(--gg-pink-light, #ffe3ec);
+        border-bottom-color: rgba(214, 51, 108, .15);
+    }
+
+    .pay-due-summary {
+        dt {
+            color: #868e96;
+            font-weight: 600;
+            font-size: .8rem;
+        }
+
+        dd {
+            font-weight: 600;
+            font-size: .85rem;
+        }
+    }
+
     // ---------------------------------------------------------------
     // Flatpickr (date of birth) theme
     // ---------------------------------------------------------------

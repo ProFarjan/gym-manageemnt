@@ -8,12 +8,6 @@
         <div class="d-flex gap-2">
             @can('members.update')
                 <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-outline-secondary">Edit</a>
-                @if ($member->status === 'pending')
-                    <form method="POST" action="{{ route('admin.members.approve', $member) }}">
-                        @csrf
-                        <button class="btn btn-success">Approve &amp; Activate</button>
-                    </form>
-                @endif
             @endcan
             @can('attendance.create')
                 @if ($member->status === 'active')
@@ -118,6 +112,46 @@
             </div>
         </div>
     </div>
+
+    @if ($member->membershipPlan)
+        <div class="card mb-3">
+            <div class="card-header">Package Details</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Package Name</dt>
+                    <dd class="col-sm-9">{{ $member->membershipPlan->name }}</dd>
+
+                    <dt class="col-sm-3">Price</dt>
+                    <dd class="col-sm-9">{{ number_format($member->membershipPlan->price, 2) }} BDT</dd>
+
+                    <dt class="col-sm-3">Duration</dt>
+                    <dd class="col-sm-9">{{ $member->membershipPlan->is_lifetime ? 'Lifetime' : $member->membershipPlan->duration_in_months.' Month(s)' }}</dd>
+
+                    <dt class="col-sm-3">Admission Fee</dt>
+                    <dd class="col-sm-9">
+                        @if ($member->membershipPlan->admission_free)
+                            <span class="badge bg-success">Free</span>
+                        @else
+                            {{ number_format($member->membershipPlan->admission_fee, 2) }} BDT
+                            @if ($member->membershipPlan->admission_discount > 0)
+                                <span class="text-muted small">(Discount: {{ number_format($member->membershipPlan->admission_discount, 2) }} BDT)</span>
+                            @endif
+                        @endif
+                    </dd>
+
+                    @if ($member->discount_amount > 0)
+                        <dt class="col-sm-3">Member Discount</dt>
+                        <dd class="col-sm-9">
+                            {{ number_format($member->discount_amount, 2) }} BDT
+                            @if ($member->discount_reason)
+                                <span class="text-muted small">({{ $member->discount_reason }})</span>
+                            @endif
+                        </dd>
+                    @endif
+                </dl>
+            </div>
+        </div>
+    @endif
 
     @if ($member->nid_image_path || $member->photo_path)
         <div class="card mb-3">

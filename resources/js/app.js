@@ -12,6 +12,41 @@ window.$ = window.jQuery = $;
 window.Chart = Chart;
 window.AOS = AOS;
 
+// Pay Due modal: Periods (Month) is swapped for a Package picker when Type is
+// "package", and Amount auto-fills from the member's plan price (x periods)
+// for Monthly/Renewal, or from the selected package's price for Package.
+function togglePayDueFields(typeSelect) {
+    const form = typeSelect.closest('form');
+    const periodsField = form?.querySelector('#payPeriodsField');
+    const packageField = form?.querySelector('#payPackageField');
+    if (!periodsField || !packageField) return;
+
+    const isPackage = typeSelect.value === 'package';
+    periodsField.classList.toggle('d-none', isPackage);
+    packageField.classList.toggle('d-none', !isPackage);
+}
+
+function updatePayAmount(form) {
+    if (!form) return;
+    const typeSelect = form.querySelector('#payType');
+    const amountInput = form.querySelector('#payAmount');
+    if (!typeSelect || !amountInput) return;
+
+    if (typeSelect.value === 'monthly' || typeSelect.value === 'renewal') {
+        const planPrice = parseFloat(typeSelect.dataset.planPrice) || 0;
+        const periods = parseFloat(form.querySelector('#payPeriods')?.value) || 1;
+        amountInput.value = (planPrice * periods).toFixed(2);
+    } else if (typeSelect.value === 'package') {
+        const packageSelect = form.querySelector('#payPackage');
+        const price = parseFloat(packageSelect?.selectedOptions[0]?.dataset.price) || 0;
+        amountInput.value = price.toFixed(2);
+    } else {
+        return;
+    }
+
+    amountInput.dispatchEvent(new Event('input'));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     AOS.init({ duration: 700, once: true, offset: 80 });
 
@@ -140,7 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!response.ok) throw new Error('Request failed');
                         return response.text();
                     })
-                    .then((html) => { modalBody.innerHTML = html; })
+                    .then((html) => {
+                        modalBody.innerHTML = html;
+                        const typeSelect = modalBody.querySelector('#payType');
+                        if (typeSelect) {
+                            togglePayDueFields(typeSelect);
+                            updatePayAmount(typeSelect.closest('form'));
+                        }
+                    })
                     .catch(() => {
                         modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
                     });
@@ -163,4 +205,33 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // Pay Due form is injected into the modal via fetch(), so it doesn't exist
+    // yet at DOMContentLoaded — listen via delegation instead of a direct binding.
+    document.addEventListener('input', (e) => {
+        if (e.target.id !== 'payAmount' && e.target.id !== 'payDiscount') return;
+
+        const form = e.target.closest('form');
+        const subTotalEl = form?.querySelector('#paySubTotal');
+        if (!subTotalEl) return;
+
+        const amount = parseFloat(form.querySelector('#payAmount')?.value) || 0;
+        const discount = parseFloat(form.querySelector('#payDiscount')?.value) || 0;
+        subTotalEl.textContent = (amount - discount).toFixed(2);
+    });
+
+    document.addEventListener('change', (e) => {
+        if (e.target.id === 'payType') {
+            togglePayDueFields(e.target);
+            updatePayAmount(e.target.closest('form'));
+        } else if (e.target.id === 'payPeriods' || e.target.id === 'payPackage') {
+            updatePayAmount(e.target.closest('form'));
+        }
+    });
+
+    document.addEventListener('input', (e) => {
+        if (e.target.id === 'payPeriods') {
+            updatePayAmount(e.target.closest('form'));
+        }
+    });
 });

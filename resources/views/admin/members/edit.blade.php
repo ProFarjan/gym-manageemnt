@@ -107,29 +107,31 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header">Membership</div>
-            <div class="card-body row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Plan <span class="text-danger">*</span></label>
-                    <select name="membership_plan_id" class="form-select" required>
-                        @foreach ($plans as $plan)
-                            <option value="{{ $plan->id }}" @selected(old('membership_plan_id', $member->membership_plan_id) == $plan->id)>
-                                {{ $plan->name }} — {{ number_format($plan->price, 2) }} BDT
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Discount Amount</label>
-                    <input type="number" step="0.01" name="discount_amount" value="{{ old('discount_amount', $member->discount_amount) }}" class="form-control" placeholder="0.00">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Discount Reason</label>
-                    <input type="text" name="discount_reason" value="{{ old('discount_reason', $member->discount_reason) }}" class="form-control" placeholder="e.g. Student discount">
+        @if ($member->status === 'pending')
+            <div class="card mb-3">
+                <div class="card-header">Membership</div>
+                <div class="card-body row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Plan <span class="text-danger">*</span></label>
+                        <select name="membership_plan_id" class="form-select" required>
+                            @foreach ($plans as $plan)
+                                <option value="{{ $plan->id }}" @selected(old('membership_plan_id', $member->membership_plan_id) == $plan->id)>
+                                    {{ $plan->name }} — {{ number_format($plan->price, 2) }} BDT
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Discount Amount</label>
+                        <input type="number" step="0.01" name="discount_amount" value="{{ old('discount_amount', $member->discount_amount) }}" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Discount Reason</label>
+                        <input type="text" name="discount_reason" value="{{ old('discount_reason', $member->discount_reason) }}" class="form-control" placeholder="e.g. Student discount">
+                    </div>
                 </div>
             </div>
-        </div>
+        @endif
 
         <button type="submit" class="btn btn-primary">Save Changes</button>
         <a href="{{ route('admin.members.show', $member) }}" class="btn btn-outline-secondary">Cancel</a>
