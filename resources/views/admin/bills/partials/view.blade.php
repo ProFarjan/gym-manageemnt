@@ -2,39 +2,120 @@
     $status = $bill->statusLabel();
     $paid = $bill->paidAmount();
     $balance = $bill->balanceDue();
+    $discountGiven = $bill->discountGiven();
 @endphp
 
-<div class="row g-3 mb-3">
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #billActionModal, #billActionModal * { visibility: visible; }
+        #billActionModal .modal-dialog { max-width: 100%; margin: 0; }
+        #billActionModal .modal-content { border: none; }
+        #billActionModal .modal-header,
+        #billActionModal .no-print { display: none !important; }
+        #billActionModal { position: absolute; inset: 0; }
+    }
+</style>
+
+<div class="text-end mb-3 no-print">
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print
+    </button>
+</div>
+
+<div class="text-center mb-3">
+    @if (setting('logo_path'))
+        <img src="{{ asset('storage/'.setting('logo_path')) }}" style="height:48px;" class="mb-2">
+    @endif
+    <h5 class="mb-0">{{ setting('business_name', config('app.name')) }}</h5>
+    @if (setting('business_address'))
+        <p class="small text-muted mb-0">{{ setting('business_address') }}</p>
+    @endif
+    @if (setting('business_phone'))
+        <p class="small text-muted mb-0">Phone: {{ setting('business_phone') }}</p>
+    @endif
+</div>
+
+<h6 class="text-center text-uppercase mb-3">Bill / Invoice</h6>
+
+<div class="row mb-3">
     <div class="col-md-6">
-        <dl class="row mb-0">
-            <dt class="col-5">Bill Number</dt><dd class="col-7">{{ $bill->bill_number }}</dd>
-            <dt class="col-5">Member</dt><dd class="col-7">{{ $bill->member->full_name }} ({{ $bill->member->admission_id }})</dd>
-            <dt class="col-5">Phone</dt><dd class="col-7">{{ $bill->member->mobile_number }}</dd>
-            <dt class="col-5">Plan</dt><dd class="col-7">{{ $bill->membershipPlan?->name ?? '—' }}</dd>
-        </dl>
+        <strong>Bill No:</strong> {{ $bill->bill_number }}<br>
+        <strong>Date:</strong> {{ $bill->created_at->format('d M Y') }}<br>
+        <strong>Due Date:</strong> {{ $bill->due_date?->format('d M Y') ?? '—' }}
     </div>
     <div class="col-md-6">
-        <dl class="row mb-0">
-            <dt class="col-6">Amount</dt><dd class="col-6">{{ number_format($bill->amount, 2) }} BDT</dd>
-            <dt class="col-6">Discount</dt><dd class="col-6">{{ $bill->discount_amount > 0 ? number_format($bill->discount_amount, 2).' BDT' : '—' }}</dd>
-            <dt class="col-6">Paid</dt><dd class="col-6">{{ number_format($paid, 2) }} BDT</dd>
-            <dt class="col-6">Balance Due</dt><dd class="col-6">{{ number_format($balance, 2) }} BDT</dd>
-            <dt class="col-6">Due Date</dt><dd class="col-6">{{ $bill->due_date?->format('d M Y') ?? '—' }}</dd>
-            <dt class="col-6">Status</dt>
-            <dd class="col-6">
-                <span class="badge bg-{{ match($status) {
-                    'paid' => 'success',
-                    'partial' => 'warning',
-                    default => 'secondary',
-                } }}">{{ ucfirst($status) }}</span>
-            </dd>
-        </dl>
+        <strong>Member:</strong> {{ $bill->member->full_name }}<br>
+        <strong>Admission ID:</strong> {{ $bill->member->admission_id }}<br>
+        <strong>Mobile:</strong> {{ $bill->member->mobile_number }}
     </div>
 </div>
 
-<hr>
-
 <div class="table-responsive">
+    <table class="table table-bordered mb-3">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th class="text-end">Amount (BDT)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($bill->lineItems() as $i => $item)
+                <tr>
+                    <td>{{ $i + 1 }}</td>
+                    <td>{{ $item['label'] }}</td>
+                    <td class="text-end">{{ number_format($item['amount'], 2) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2" class="text-end">Subtotal</td>
+                <td class="text-end">{{ number_format($bill->admission_fee_amount + $bill->monthly_amount, 2) }}</td>
+            </tr>
+            @if ($bill->discount_amount > 0)
+                <tr>
+                    <td colspan="2" class="text-end">Discount</td>
+                    <td class="text-end">-{{ number_format($bill->discount_amount, 2) }}</td>
+                </tr>
+            @endif
+            <tr class="fw-bold">
+                <td colspan="2" class="text-end">Total</td>
+                <td class="text-end">{{ number_format($bill->amount, 2) }}</td>
+            </tr>
+            <tr>
+                <td colspan="2" class="text-end">Paid</td>
+                <td class="text-end">{{ number_format($paid, 2) }}</td>
+            </tr>
+            @if ($discountGiven > 0)
+                <tr>
+                    <td colspan="2" class="text-end text-muted small">— of which discounted</td>
+                    <td class="text-end text-muted small">{{ number_format($discountGiven, 2) }}</td>
+                </tr>
+            @endif
+            <tr class="fw-bold">
+                <td colspan="2" class="text-end">Balance Due</td>
+                <td class="text-end">{{ number_format($balance, 2) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<p class="mb-3">
+    <strong>Status:</strong>
+    <span class="badge bg-{{ match($status) {
+        'paid' => 'success',
+        'partial' => 'warning',
+        default => 'secondary',
+    } }}">{{ ucfirst($status) }}</span>
+</p>
+
+<div class="no-print">
+    <hr>
+
+    <h6>Payments Received</h6>
+    <div class="table-responsive">
     <table class="table mb-0">
         <thead>
             <tr><th>Date</th><th>Amount</th><th>Discount</th><th>Method</th><th>Account</th><th>Status</th><th></th></tr>
@@ -50,7 +131,7 @@
                     <td>
                         <span class="badge bg-{{ $payment->status === 'refunded' ? 'danger' : 'success' }}">{{ ucfirst($payment->status) }}</span>
                     </td>
-                    <td>
+                    <td class="no-print">
                         <a href="{{ route('admin.payments.receipt', $payment) }}" target="_blank" class="btn btn-sm btn-outline-secondary">Receipt</a>
                     </td>
                 </tr>
@@ -59,4 +140,5 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>

@@ -262,6 +262,29 @@ document.addEventListener('DOMContentLoaded', () => {
         subTotalEl.textContent = (amount - discount).toFixed(2);
     });
 
+    // Bill Pay form: unlike the Pay Due "net cash" Sub Total above, a discount
+    // here counts *toward* settling the bill rather than against it, so this
+    // is Amount + Discount — kept as separate field IDs/listener on purpose
+    // so it can't affect the Pay Due calculation's different formula.
+    document.addEventListener('input', (e) => {
+        if (e.target.id !== 'billPayAmount' && e.target.id !== 'billPayDiscount') return;
+
+        const form = e.target.closest('form');
+        const totalEl = form?.querySelector('#billPayTotalSettled');
+        if (!totalEl) return;
+
+        const amount = parseFloat(form.querySelector('#billPayAmount')?.value) || 0;
+        const discount = parseFloat(form.querySelector('#billPayDiscount')?.value) || 0;
+        const settled = amount + discount;
+        totalEl.textContent = settled.toFixed(2);
+
+        const balanceDue = parseFloat(form.dataset.balanceDue) || 0;
+        const warningEl = form.querySelector('#billPayOverageWarning');
+        const exceeds = settled > balanceDue + 0.01;
+        totalEl.classList.toggle('text-danger', exceeds);
+        warningEl?.classList.toggle('d-none', !exceeds);
+    });
+
     document.addEventListener('change', (e) => {
         if (e.target.id === 'payType') {
             togglePayDueFields(e.target);

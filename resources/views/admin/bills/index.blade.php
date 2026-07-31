@@ -40,6 +40,7 @@
                         <th>Member</th>
                         <th>Plan</th>
                         <th>Amount</th>
+                        <th>Discount</th>
                         <th>Paid</th>
                         <th>Balance</th>
                         <th>Due Date</th>
@@ -53,6 +54,8 @@
                             $status = $bill->statusLabel();
                             $paid = $bill->paidAmount();
                             $balance = $bill->balanceDue();
+                            $subtotal = $bill->admission_fee_amount + $bill->monthly_amount;
+                            $paymentDiscount = $bill->discountGiven();
                         @endphp
                         <tr>
                             <td>{{ $bill->bill_number }}</td>
@@ -72,8 +75,14 @@
                                 </div>
                             </td>
                             <td>{{ $bill->membershipPlan?->name ?? '—' }}</td>
-                            <td>{{ number_format($bill->amount, 2) }}</td>
-                            <td>{{ number_format($paid, 2) }}</td>
+                            <td>{{ number_format($subtotal, 2) }}</td>
+                            <td>{{ $bill->discount_amount > 0 ? number_format($bill->discount_amount, 2) : '—' }}</td>
+                            <td>
+                                {{ number_format($paid, 2) }}
+                                @if ($paymentDiscount > 0)
+                                    <div class="text-muted small">({{ number_format($paymentDiscount, 2) }} discounted)</div>
+                                @endif
+                            </td>
                             <td>{{ number_format($balance, 2) }}</td>
                             <td>{{ $bill->due_date?->format('d M Y') ?? '—' }}</td>
                             <td>
@@ -109,7 +118,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-4">No bills found.</td>
+                            <td colspan="10" class="text-center text-muted py-4">No bills found.</td>
                         </tr>
                     @endforelse
                 </tbody>

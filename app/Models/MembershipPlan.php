@@ -37,4 +37,14 @@ class MembershipPlan extends Model
     {
         return $this->hasMany(Member::class);
     }
+
+    public function admissionFeeCharged(): float
+    {
+        return $this->admission_free ? 0.0 : (float) $this->admission_fee;
+    }
+
+    public function totalWithAdmission(): float
+    {
+        return (float) $this->price + $this->admissionFeeCharged();
+    }
 }

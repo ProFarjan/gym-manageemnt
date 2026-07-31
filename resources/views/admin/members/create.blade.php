@@ -107,7 +107,8 @@
                         <option value="">Select a plan</option>
                         @foreach ($plans as $plan)
                             <option value="{{ $plan->id }}" @selected(old('membership_plan_id') == $plan->id)>
-                                {{ $plan->name }} — {{ number_format($plan->price, 2) }} BDT
+                                {{ $plan->name }} — {{ number_format($plan->totalWithAdmission(), 2) }} BDT
+                                ({{ number_format($plan->price, 2) }} + {{ number_format($plan->admissionFeeCharged(), 2) }} Admission)
                             </option>
                         @endforeach
                     </select>

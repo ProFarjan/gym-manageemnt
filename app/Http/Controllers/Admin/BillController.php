@@ -66,12 +66,27 @@ class BillController extends Controller
 
     public function pay(Request $request, Bill $bill)
     {
+        $bill->load('payments');
+
         $data = $request->validate([
             'payment_account_id' => ['required', 'exists:payment_accounts,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'discount_reason' => ['required_with:discount_amount', 'nullable', 'string', 'max:255'],
         ]);
+
+        // Amount + discount together must not resolve more than what's actually
+        // owed — this is exactly the mistake that produced a "paid" total higher
+        // than the bill itself (e.g. forgetting to reduce a pre-filled Amount
+        // before adding a discount on top of it).
+        $settled = $data['amount'] + ($data['discount_amount'] ?? 0);
+        $balance = $bill->balanceDue();
+
+        if ($settled > $balance + 0.01) {
+            return back()->withErrors([
+                'amount' => "Amount + Discount ({$settled}) exceeds the balance due ({$balance}). Reduce the amount or discount so they add up to at most the balance due.",
+            ])->withInput();
+        }
 
         $data['type'] = 'admission';
         $data['method'] = 'manual';
