@@ -5,9 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h4 mb-0">{{ $member->full_name }} <span class="text-muted small">({{ $member->admission_id }})</span></h1>
-        <div class="d-flex gap-2">
+        <div class="member-action-group">
             @can('members.update')
-                <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-outline-secondary">Edit</a>
+                <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-secondary">Edit</a>
             @endcan
             @can('attendance.create')
                 @if ($member->status === 'active')
@@ -15,12 +15,12 @@
                     @if ($openAttendance)
                         <form method="POST" action="{{ route('admin.members.attendance.check-out', $member) }}">
                             @csrf
-                            <button class="btn btn-outline-primary">Check Out (in since {{ $openAttendance->check_in->format('h:i A') }})</button>
+                            <button class="btn btn-info">Check Out (in since {{ $openAttendance->check_in->format('h:i A') }})</button>
                         </form>
                     @else
                         <form method="POST" action="{{ route('admin.members.attendance.check-in', $member) }}">
                             @csrf
-                            <button class="btn btn-primary">Check In</button>
+                            <button class="btn btn-success">Check In</button>
                         </form>
                     @endif
                 @endif
@@ -29,9 +29,12 @@
                 @if (in_array($member->status, ['active', 'expired']))
                     <form method="POST" action="{{ route('admin.members.close', $member) }}" onsubmit="return confirm('Close this membership permanently?');">
                         @csrf
-                        <button class="btn btn-outline-dark">Close Membership</button>
+                        <button class="btn btn-dark">Close Membership</button>
                     </form>
                 @endif
+            @endcan
+            @can('payments.create')
+                <a href="#" class="btn btn-primary" data-modal-url="{{ route('admin.members.pay-due', $member) }}" data-modal-title="Pay Due — {{ $member->full_name }}">Pay Due</a>
             @endcan
         </div>
     </div>
@@ -181,5 +184,19 @@
     <div class="card mt-3">
         <div class="card-header">Personal Training Packages</div>
         @include('admin.members.partials.training', ['member' => $member, 'showAssignForm' => false])
+    </div>
+
+    <div class="modal fade" id="memberActionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="memberActionModalLabel">&nbsp;</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="memberActionModalBody">
+                    <div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection

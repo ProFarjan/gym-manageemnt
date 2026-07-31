@@ -400,6 +400,51 @@ $admin-content-bg: #f4f5f9;
         }
     }
 
+    // Joined action bar on the member show page (Edit / Check In-Out / Close
+    // Membership / Pay Due). Members are a mix of plain <a class="btn"> and
+    // <form><button class="btn"></form> (POST actions need the form), so the
+    // rounding/spacing rules target ".btn" generically rather than relying on
+    // Bootstrap's stock .btn-group (which only works via direct .btn children).
+    .member-action-group {
+        display: inline-flex;
+        flex-wrap: wrap;
+        row-gap: .5rem;
+
+        > * {
+            margin-left: -1px;
+        }
+
+        > :first-child {
+            margin-left: 0;
+        }
+
+        form {
+            display: inline-flex;
+        }
+
+        .btn {
+            border-radius: 0;
+            position: relative;
+        }
+
+        .btn:hover,
+        .btn:focus {
+            z-index: 1;
+        }
+
+        > :first-child .btn,
+        > a.btn:first-child {
+            border-top-left-radius: .5rem;
+            border-bottom-left-radius: .5rem;
+        }
+
+        > :last-child .btn,
+        > a.btn:last-child {
+            border-top-right-radius: .5rem;
+            border-bottom-right-radius: .5rem;
+        }
+    }
+
     // ---------------------------------------------------------------
     // Flatpickr (date of birth) theme
     // ---------------------------------------------------------------
