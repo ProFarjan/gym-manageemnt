@@ -13,6 +13,7 @@ class PermissionSeeder extends Seeder
      */
     private const MODULES = [
         'members',
+        'bills',
         'payments',
         'attendance',
         'offers',
@@ -55,6 +56,7 @@ class PermissionSeeder extends Seeder
 
         Role::findByName('Reception', 'web')->syncPermissions([
             'members.view', 'members.create', 'members.update',
+            'bills.view', 'bills.create',
             'payments.view', 'payments.create',
             'attendance.view', 'attendance.create',
             'offers.view',

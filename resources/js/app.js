@@ -206,6 +206,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const billActionModalEl = document.getElementById('billActionModal');
+    if (billActionModalEl) {
+        const billActionModal = new window.Bootstrap.Modal(billActionModalEl);
+        const modalTitle = document.getElementById('billActionModalLabel');
+        const modalBody = document.getElementById('billActionModalBody');
+
+        document.querySelectorAll('[data-modal-url]').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                modalTitle.textContent = link.dataset.modalTitle || '';
+                modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
+                billActionModal.show();
+
+                fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then((response) => {
+                        if (!response.ok) throw new Error('Request failed');
+                        return response.text();
+                    })
+                    .then((html) => { modalBody.innerHTML = html; })
+                    .catch(() => {
+                        modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
+                    });
+            });
+        });
+    }
+
+    const billDeleteModalEl = document.getElementById('billDeleteModal');
+    if (billDeleteModalEl) {
+        const billDeleteModal = new window.Bootstrap.Modal(billDeleteModalEl);
+        const deleteForm = document.getElementById('billDeleteForm');
+        const deleteName = document.getElementById('billDeleteName');
+
+        document.querySelectorAll('[data-delete-url]').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                deleteForm.action = link.dataset.deleteUrl;
+                deleteName.textContent = link.dataset.deleteName || 'this bill';
+                billDeleteModal.show();
+            });
+        });
+    }
+
     // Pay Due form is injected into the modal via fetch(), so it doesn't exist
     // yet at DOMContentLoaded — listen via delegation instead of a direct binding.
     document.addEventListener('input', (e) => {

@@ -3,9 +3,11 @@
 namespace App\Observers;
 
 use App\Jobs\SyncMemberToZKTeco;
+use App\Models\Bill;
 use App\Models\Member;
 use App\Models\ZKTecoSyncLog;
 use App\Notifications\RegistrationConfirmation;
+use App\Services\BillNumberGenerator;
 
 class MemberObserver
 {
@@ -13,6 +15,17 @@ class MemberObserver
     {
         if ($member->status === 'active') {
             $this->queueSync($member, 'create_user');
+        }
+
+        if ($member->membership_plan_id && $member->membershipPlan) {
+            Bill::create([
+                'member_id' => $member->id,
+                'membership_plan_id' => $member->membership_plan_id,
+                'bill_number' => BillNumberGenerator::generate(),
+                'amount' => max(0, $member->membershipPlan->price - $member->discount_amount),
+                'discount_amount' => $member->discount_amount,
+                'due_date' => now(),
+            ]);
         }
 
         $member->notify(new RegistrationConfirmation);

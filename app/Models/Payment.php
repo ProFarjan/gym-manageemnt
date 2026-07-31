@@ -12,6 +12,7 @@ class Payment extends Model
 
     protected $fillable = [
         'member_id',
+        'bill_id',
         'payment_account_id',
         'type',
         'method',
@@ -45,6 +46,11 @@ class Payment extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function bill(): BelongsTo
+    {
+        return $this->belongsTo(Bill::class);
     }
 
     public function paymentAccount(): BelongsTo

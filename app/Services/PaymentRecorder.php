@@ -21,6 +21,7 @@ class PaymentRecorder
 
         $payment = new Payment([
             'member_id' => $member->id,
+            'bill_id' => $data['bill_id'] ?? null,
             'payment_account_id' => $data['payment_account_id'],
             'type' => $data['type'],
             'method' => $data['method'],

@@ -75,6 +75,11 @@ class Member extends Authenticatable
         return $this->hasMany(Payment::class);
     }
 
+    public function bills(): HasMany
+    {
+        return $this->hasMany(Bill::class);
+    }
+
     public function memberTrainingPackages(): HasMany
     {
         return $this->hasMany(MemberTrainingPackage::class);

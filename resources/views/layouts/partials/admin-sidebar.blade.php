@@ -26,12 +26,14 @@
                 </li>
             @endcan
 
-            <li class="nav-item">
-                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">
-                    <i class="bi bi-receipt"></i><span>Bills</span>
-                    <span class="badge bg-secondary soon-badge">Soon</span>
-                </a>
-            </li>
+            @can('bills.view')
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.bills.*') ? 'active' : '' }}"
+                       href="{{ route('admin.bills.index') }}">
+                        <i class="bi bi-receipt"></i><span>Bills</span>
+                    </a>
+                </li>
+            @endcan
 
             @canany(['membership_plans.view', 'offers.view'])
                 @php $packagesActive = request()->routeIs(['admin.membership-plans.*', 'admin.offers.*']); @endphp

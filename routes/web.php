@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\BillController;
 use App\Http\Controllers\Admin\BulkNotificationController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -186,6 +187,19 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     });
     Route::middleware('permission:personal_training.update')->group(function () {
         Route::post('/training-packages/{trainingPackage}/log-session', [MemberTrainingPackageController::class, 'logSession'])->name('training-packages.log-session');
+    });
+
+    // Bills
+    Route::middleware('permission:bills.view')->group(function () {
+        Route::get('/bills', [BillController::class, 'index'])->name('bills.index');
+        Route::get('/bills/{bill}/view-panel', [BillController::class, 'viewPanel'])->name('bills.view-panel');
+    });
+    Route::middleware('permission:bills.create')->group(function () {
+        Route::get('/bills/{bill}/pay-panel', [BillController::class, 'payPanel'])->name('bills.pay-panel');
+        Route::post('/bills/{bill}/pay', [BillController::class, 'pay'])->name('bills.pay');
+    });
+    Route::middleware('permission:bills.delete')->group(function () {
+        Route::delete('/bills/{bill}', [BillController::class, 'destroy'])->name('bills.destroy');
     });
 
     // Payments
