@@ -43,12 +43,17 @@ class PaymentRecorder
             if ($member->status === 'pending') {
                 $member->admission_date = now();
                 $member->due_date = MembershipCycle::nextDueDate(now(), $plan);
-            } else {
+                $member->status = 'active';
+                $member->save();
+            } elseif ($data['type'] !== 'admission') {
+                // A follow-up installment on the one-time admission charge (e.g.
+                // paying off the rest of a registration bill after the member
+                // already activated) isn't a new billing cycle, unlike a genuine
+                // monthly/package/renewal payment, so it must not push the due
+                // date out again.
                 $member->due_date = MembershipCycle::extend($member->due_date ?? now(), $plan, $periods);
+                $member->save();
             }
-
-            $member->status = 'active';
-            $member->save();
 
             $payment->period_start = $periodStart;
             $payment->period_end = $member->due_date;

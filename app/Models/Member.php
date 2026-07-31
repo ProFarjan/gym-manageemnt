@@ -104,4 +104,14 @@ class Member extends Authenticatable
     {
         return (bool) $this->membershipPlan?->is_lifetime;
     }
+
+    /**
+     * The oldest bill (invoice-by-invoice, ascending) that isn't fully paid
+     * yet — the one a "Pay Due" payment should be applied against.
+     */
+    public function oldestOutstandingBill(): ?Bill
+    {
+        return $this->bills()->with('payments')->oldest('id')->get()
+            ->first(fn (Bill $bill) => $bill->statusLabel() !== 'paid');
+    }
 }

@@ -98,30 +98,79 @@ class MemberController extends Controller
     public function payDuePanel(Member $member)
     {
         $paymentAccounts = PaymentAccount::where('is_active', true)->get();
-        $trainingPackages = PersonalTrainingPackage::where('is_active', true)->get();
-        $lastPayment = $member->payments()->latest('id')->first();
+        $bills = $member->bills()->with('payments')->oldest('id')->get();
 
-        return view('admin.members.partials.pay-due', compact('member', 'paymentAccounts', 'trainingPackages', 'lastPayment'));
+        $totalBilled = 0;
+        $totalDiscount = 0;
+        $totalPaid = 0;
+        $totalDue = 0;
+        $targetBill = null;
+
+        foreach ($bills as $bill) {
+            $totalBilled += $bill->admission_fee_amount + $bill->monthly_amount;
+            $totalDiscount += $bill->discount_amount;
+            $totalPaid += $bill->paidAmount();
+            $totalDue += $bill->balanceDue();
+
+            if (! $targetBill && $bill->statusLabel() !== 'paid') {
+                $targetBill = $bill;
+            }
+        }
+
+        return view('admin.members.partials.pay-due', compact(
+            'member', 'paymentAccounts', 'totalBilled', 'totalDiscount', 'totalPaid', 'totalDue', 'targetBill'
+        ));
     }
 
     /**
-     * Modal panel: payment history + refund.
+     * Modal panel: payment history + refund. AJAX-searchable and paginated —
+     * the initial open (via the Action dropdown) renders the full panel with
+     * the search box; subsequent search/page requests from within the modal
+     * return just the results fragment so the search input never loses focus.
      */
-    public function paymentsPanel(Member $member)
+    public function paymentsPanel(Request $request, Member $member)
     {
-        $member->load('payments.paymentAccount');
+        $payments = $member->payments()
+            ->with('paymentAccount')
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->string('search');
+                $q->where(function ($q) use ($search) {
+                    $q->where('receipt_number', 'like', "%{$search}%")
+                        ->orWhere('type', 'like', "%{$search}%")
+                        ->orWhere('method', 'like', "%{$search}%")
+                        ->orWhereHas('paymentAccount', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->latest('id')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('admin.members.partials.payments', compact('member'));
+        if ($request->has('page') || $request->has('search')) {
+            return view('admin.members.partials._payments-results', compact('payments'));
+        }
+
+        return view('admin.members.partials.payments-searchable', compact('member', 'payments'));
     }
 
     /**
-     * Modal panel: recent attendance.
+     * Modal panel: recent attendance. Same AJAX-searchable/paginated pattern
+     * as paymentsPanel() above.
      */
-    public function attendancePanel(Member $member)
+    public function attendancePanel(Request $request, Member $member)
     {
-        $recentAttendance = $member->attendances()->latest('check_in')->limit(15)->get();
+        $attendances = $member->attendances()
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $q->where('source', 'like', '%'.$request->string('search').'%');
+            })
+            ->latest('check_in')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('admin.members.partials.attendance', compact('recentAttendance'));
+        if ($request->has('page') || $request->has('search')) {
+            return view('admin.members.partials._attendance-results', compact('attendances'));
+        }
+
+        return view('admin.members.partials.attendance', compact('member', 'attendances'));
     }
 
     /**

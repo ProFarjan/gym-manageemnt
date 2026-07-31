@@ -14,22 +14,34 @@ class PaymentController extends Controller
     public function store(Request $request, Member $member)
     {
         $data = $request->validate([
-            'type' => ['required', 'in:admission,monthly,package,renewal,personal_training'],
             'payment_account_id' => ['required', 'exists:payment_accounts,id'],
-            'amount' => ['required', 'numeric', 'min:0'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'discount_reason' => ['required_with:discount_amount', 'nullable', 'string', 'max:255'],
-            'periods' => ['nullable', 'integer', 'min:1', 'max:24'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
             'notes' => ['nullable', 'string'],
         ]);
 
+        $bill = $member->oldestOutstandingBill();
+
+        if (! $bill) {
+            return back()->withErrors(['amount' => 'This member has no outstanding bills to pay.']);
+        }
+
+        $balance = $bill->balanceDue();
+
+        if ($data['amount'] > $balance + 0.01) {
+            return back()->withErrors([
+                'amount' => "Amount ({$data['amount']}) exceeds the balance due ({$balance}) on bill {$bill->bill_number}.",
+            ])->withInput();
+        }
+
+        $data['type'] = 'admission';
         $data['method'] = 'manual';
+        $data['bill_id'] = $bill->id;
         $data['created_by'] = $request->user()->id;
 
         $payment = PaymentRecorder::record($member, $data);
 
         return redirect()->route('admin.members.show', $member)
-            ->with('status', "Payment recorded ({$payment->receipt_number}).");
+            ->with('status', "Payment recorded against {$bill->bill_number} ({$payment->receipt_number}).");
     }
 
     public function refund(Request $request, Payment $payment)

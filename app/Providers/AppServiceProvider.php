@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\Channels\SmsChannel;
 use App\Observers\MemberObserver;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
@@ -34,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
         Member::observe(MemberObserver::class);
 
         Notification::extend('sms', fn ($app) => new SmsChannel);
+
+        // Laravel's paginator defaults to Tailwind-styled links, but this app is
+        // Bootstrap 5 throughout — without this, every ->links() call renders
+        // unstyled markup.
+        Paginator::useBootstrapFive();
 
         // Neither the staff admin dashboard (route name "admin.dashboard") nor the
         // member portal dashboard ("member.dashboard") is literally named "dashboard",
