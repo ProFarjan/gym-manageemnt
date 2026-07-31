@@ -21,6 +21,9 @@ class MemberController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = (int) $request->input('per_page', 20);
+        $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 20;
+
         $members = Member::query()
             ->with('membershipPlan')
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
@@ -33,10 +36,14 @@ class MemberController extends Controller
                 });
             })
             ->latest('id')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('admin.members.index', compact('members'));
+        if ($request->ajax()) {
+            return view('admin.members.partials._members-table', compact('members', 'perPage'));
+        }
+
+        return view('admin.members.index', compact('members', 'perPage'));
     }
 
     /**

@@ -229,17 +229,30 @@ document.addEventListener('DOMContentLoaded', () => {
         warningEl?.classList.toggle('d-none', !exceeds);
     });
 
-    // Generic AJAX search + pagination for any ".ajax-panel" (currently the
-    // Members "View Payments" and "Attendance Records" modal panels). Only the
-    // ".ajax-panel-results" region is swapped, never the search input itself,
-    // so typing doesn't lose focus or cursor position on every keystroke.
+    // Generic AJAX search/filter + pagination for any ".ajax-panel" (the
+    // Members index table, and the "View Payments" / "Attendance Records"
+    // modal panels). Any control inside the panel tagged [data-ajax-param]
+    // feeds the fetch as a query param — text inputs debounced, selects fire
+    // immediately. Only ".ajax-panel-results" is ever swapped, so a search
+    // box or dropdown never loses focus/value on every keystroke or change.
+    function collectAjaxParams(panel, overrides) {
+        const params = {};
+        panel.querySelectorAll('[data-ajax-param]').forEach((el) => {
+            if (el.value) params[el.dataset.ajaxParam] = el.value;
+        });
+        return Object.assign(params, overrides);
+    }
+
     function loadAjaxPanel(panel, params) {
         const resultsEl = panel.querySelector('.ajax-panel-results');
         if (!resultsEl) return;
 
         const url = new URL(panel.dataset.panelUrl, window.location.origin);
-        if (params.search) url.searchParams.set('search', params.search);
-        if (params.page) url.searchParams.set('page', params.page);
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                url.searchParams.set(key, value);
+            }
+        });
 
         resultsEl.style.opacity = '0.5';
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -257,14 +270,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.addEventListener('input', (e) => {
-        if (!e.target.classList.contains('ajax-panel-search')) return;
+        if (!e.target.matches('[data-ajax-param]') || e.target.tagName !== 'INPUT') return;
         const panel = e.target.closest('.ajax-panel');
         if (!panel) return;
 
         clearTimeout(panel._ajaxSearchTimeout);
         panel._ajaxSearchTimeout = setTimeout(() => {
-            loadAjaxPanel(panel, { search: e.target.value, page: 1 });
+            loadAjaxPanel(panel, collectAjaxParams(panel, { page: 1 }));
         }, 400);
+    });
+
+    document.addEventListener('change', (e) => {
+        if (!e.target.matches('[data-ajax-param]') || e.target.tagName !== 'SELECT') return;
+        const panel = e.target.closest('.ajax-panel');
+        if (!panel) return;
+
+        loadAjaxPanel(panel, collectAjaxParams(panel, { page: 1 }));
     });
 
     document.addEventListener('click', (e) => {
@@ -276,7 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!panel) return;
 
         const page = new URL(link.href).searchParams.get('page') || 1;
-        const search = panel.querySelector('.ajax-panel-search')?.value || '';
-        loadAjaxPanel(panel, { search, page });
+        loadAjaxPanel(panel, collectAjaxParams(panel, { page }));
     });
 });
