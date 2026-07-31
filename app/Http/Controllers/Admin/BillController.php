@@ -13,6 +13,9 @@ class BillController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = (int) $request->input('per_page', 20);
+        $perPage = in_array($perPage, [10, 20, 50, 100], true) ? $perPage : 20;
+
         $query = Bill::query()
             ->with(['member', 'membershipPlan', 'payments'])
             ->when($request->filled('search'), function ($q) use ($request) {
@@ -21,7 +24,8 @@ class BillController extends Controller
                     $q->where('bill_number', 'like', "%{$search}%")
                         ->orWhereHas('member', function ($q) use ($search) {
                             $q->where('full_name', 'like', "%{$search}%")
-                                ->orWhere('admission_id', 'like', "%{$search}%");
+                                ->orWhere('admission_id', 'like', "%{$search}%")
+                                ->orWhere('mobile_number', 'like', "%{$search}%");
                         });
                 });
             })
@@ -36,17 +40,21 @@ class BillController extends Controller
             $filtered = $query->get()->filter(fn (Bill $bill) => $bill->statusLabel() === $status)->values();
 
             $bills = new LengthAwarePaginator(
-                $filtered->forPage($page, 20),
+                $filtered->forPage($page, $perPage),
                 $filtered->count(),
-                20,
+                $perPage,
                 $page,
                 ['path' => $request->url(), 'query' => $request->query()]
             );
         } else {
-            $bills = $query->paginate(20)->withQueryString();
+            $bills = $query->paginate($perPage)->withQueryString();
         }
 
-        return view('admin.bills.index', compact('bills'));
+        if ($request->ajax()) {
+            return view('admin.bills.partials._bills-table', compact('bills'));
+        }
+
+        return view('admin.bills.index', compact('bills', 'perPage'));
     }
 
     public function viewPanel(Bill $bill)
