@@ -19,7 +19,25 @@ $spacers: (
 
 @import "bootstrap/scss/bootstrap";
 @import "aos/dist/aos.css";
+@import "select2/dist/css/select2.css";
 @import "admin";
+
+// Match select2's default sizing to the admin panel's compact `.form-select-sm` inputs
+.select2-container--default .select2-selection--single {
+    height: calc(1.5em + .5rem + 2px);
+    border-color: #ced4da;
+    border-radius: $border-radius;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: calc(1.5em + .5rem);
+    padding-left: .5rem;
+    font-size: .875rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + .5rem + 2px);
+}
 
 body {
     background-color: #f8f5f7;

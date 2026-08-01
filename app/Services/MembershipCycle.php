@@ -36,4 +36,15 @@ class MembershipCycle
 
         return Carbon::instance($currentDueDate)->copy()->addMonthsNoOverflow($plan->duration_in_months * $periods);
     }
+
+    /**
+     * Same fixed-calendar-day extension as extend(), but for a raw month count
+     * not tied to any MembershipPlan — used by manually created bills (the
+     * open "Create Bill" form's Duration field), which aren't necessarily
+     * priced against the member's actual plan.
+     */
+    public static function extendByMonths(CarbonInterface $currentDueDate, int $months): Carbon
+    {
+        return Carbon::instance($currentDueDate)->copy()->addMonthsNoOverflow($months);
+    }
 }

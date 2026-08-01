@@ -12,6 +12,9 @@ window.$ = window.jQuery = $;
 window.Chart = Chart;
 window.AOS = AOS;
 
+// select2 attaches itself to the jQuery instance above at import time.
+import 'select2';
+
 document.addEventListener('DOMContentLoaded', () => {
     AOS.init({ duration: 700, once: true, offset: 80 });
 
@@ -182,11 +185,40 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!response.ok) throw new Error('Request failed');
                         return response.text();
                     })
-                    .then((html) => { modalBody.innerHTML = html; })
+                    .then((html) => {
+                        modalBody.innerHTML = html;
+                        initMemberSelect2(modalBody);
+                    })
                     .catch(() => {
                         modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
                     });
             });
+        });
+    }
+
+    // Create Bill form: Select2 AJAX member picker (searches by name, phone,
+    // or member ID server-side — member counts will outgrow what's sane to
+    // embed client-side). Initialized after the create panel's HTML lands in
+    // the modal, since the <select> doesn't exist until then.
+    function initMemberSelect2(container) {
+        const el = container.querySelector('.member-select2');
+        if (!el || !window.$.fn.select2) return;
+
+        window.$(el).select2({
+            dropdownParent: window.$(container),
+            width: '100%',
+            placeholder: 'Search by name, phone or member ID',
+            minimumInputLength: 1,
+            ajax: {
+                url: el.dataset.ajaxUrl,
+                dataType: 'json',
+                delay: 300,
+                data: (params) => ({ q: params.term, page: params.page || 1 }),
+                processResults: (data, params) => {
+                    params.page = params.page || 1;
+                    return { results: data.results, pagination: data.pagination };
+                },
+            },
         });
     }
 
@@ -227,6 +259,67 @@ document.addEventListener('DOMContentLoaded', () => {
         const exceeds = settled > balanceDue + 0.01;
         totalEl.classList.toggle('text-danger', exceeds);
         warningEl?.classList.toggle('d-none', !exceeds);
+    });
+
+    // Create Bill form: dynamic line items. Each row's Total is qty × unit
+    // price, recomputed live; Sub Total/Grand Total are recomputed across
+    // all rows whenever any row or the Discount field changes. Delegated
+    // since the form is injected into the modal via fetch.
+    function recalcBillTotals(form) {
+        let subtotal = 0;
+        form.querySelectorAll('.bill-item-row').forEach((row) => {
+            const qty = parseFloat(row.querySelector('.bill-item-qty')?.value) || 0;
+            const price = parseFloat(row.querySelector('.bill-item-price')?.value) || 0;
+            const total = qty * price;
+            const totalEl = row.querySelector('.bill-item-total');
+            if (totalEl) totalEl.value = total.toFixed(2);
+            subtotal += total;
+        });
+
+        const discount = parseFloat(form.querySelector('#billDiscountInput')?.value) || 0;
+        const grandTotal = Math.max(0, subtotal - discount);
+
+        const subtotalEl = form.querySelector('#billSubTotal');
+        const grandTotalEl = form.querySelector('#billGrandTotal');
+        if (subtotalEl) subtotalEl.textContent = subtotal.toFixed(2);
+        if (grandTotalEl) grandTotalEl.textContent = grandTotal.toFixed(2);
+    }
+
+    document.addEventListener('input', (e) => {
+        if (
+            !e.target.classList.contains('bill-item-qty') &&
+            !e.target.classList.contains('bill-item-price') &&
+            e.target.id !== 'billDiscountInput'
+        ) return;
+
+        const form = e.target.closest('form');
+        if (form) recalcBillTotals(form);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (e.target.id !== 'billItemAddRow') return;
+
+        const form = e.target.closest('form');
+        const template = form?.querySelector('#billItemRowTemplate');
+        const body = form?.querySelector('#billItemsBody');
+        if (!template || !body) return;
+
+        body.appendChild(template.content.cloneNode(true));
+    });
+
+    document.addEventListener('click', (e) => {
+        const removeBtn = e.target.closest('.bill-item-remove');
+        if (!removeBtn) return;
+
+        const form = removeBtn.closest('form');
+        const body = form?.querySelector('#billItemsBody');
+        if (!body) return;
+
+        // Always leave at least one row so the form stays submittable.
+        if (body.querySelectorAll('.bill-item-row').length <= 1) return;
+
+        removeBtn.closest('.bill-item-row')?.remove();
+        recalcBillTotals(form);
     });
 
     // Generic AJAX search/filter + pagination for any ".ajax-panel" (the

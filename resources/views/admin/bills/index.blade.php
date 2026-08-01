@@ -5,6 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h4 mb-0">Bills</h1>
+        @can('bills.create')
+            <a href="#" class="btn btn-primary" data-modal-url="{{ route('admin.bills.create-panel') }}" data-modal-title="Create Bill">+ Create Bill</a>
+        @endcan
     </div>
 
     @if (session('status'))

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Bill;
 use App\Models\Member;
 use App\Models\Payment;
 use App\Notifications\PaymentReceivedNotification;
@@ -64,5 +65,37 @@ class PaymentRecorder
         $member->notify(new PaymentReceivedNotification($payment));
 
         return $payment;
+    }
+
+    /**
+     * A manually created bill (the open "Create Bill" form) can carry its own
+     * Duration (Month) — once that specific bill is fully paid off, the
+     * member's due date extends by that many months, exactly once, ever.
+     * Isolated from record()'s membership-type branching on purpose: that
+     * logic already has a proven, narrow contract (fixed after a real
+     * double-extension bug), and bolting bill-duration handling onto it would
+     * risk reopening that same class of bug.
+     *
+     * $memberJustActivated should be true when the caller captured the
+     * member's status as "pending" immediately before calling record() for
+     * this same payment — in that case record() already set an authoritative
+     * due date from the member's plan as part of the pending->active
+     * transition, so applying the bill's own duration on top would double it.
+     */
+    public static function applyBillDurationIfJustCompleted(Bill $bill, bool $memberJustActivated = false): void
+    {
+        $bill->load('payments');
+
+        if ($bill->duration_applied_at || ! $bill->duration_months || $bill->statusLabel() !== 'paid') {
+            return;
+        }
+
+        if (! $memberJustActivated) {
+            $member = $bill->member;
+            $member->due_date = MembershipCycle::extendByMonths($member->due_date ?? now(), $bill->duration_months);
+            $member->save();
+        }
+
+        $bill->update(['duration_applied_at' => now()]);
     }
 }

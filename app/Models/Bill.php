@@ -20,6 +20,8 @@ class Bill extends Model
         'amount',
         'discount_amount',
         'due_date',
+        'duration_months',
+        'duration_applied_at',
         'notes',
     ];
 
@@ -31,6 +33,7 @@ class Bill extends Model
             'amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'due_date' => 'date',
+            'duration_applied_at' => 'datetime',
         ];
     }
 
@@ -47,6 +50,11 @@ class Bill extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(BillItem::class);
     }
 
     /**
@@ -94,22 +102,39 @@ class Bill extends Model
     }
 
     /**
-     * Itemized breakdown shown on the printable bill — admission fee is
-     * omitted entirely when the plan didn't charge one (0 or admission_free).
+     * Itemized breakdown shown on the printable bill. Manually created bills
+     * (the open "Create Bill" form) have real BillItem rows; auto-created
+     * registration bills (MemberObserver) never do, so they always fall
+     * through to the legacy Admission Fee / Monthly Charge composition —
+     * admission fee is omitted entirely when the plan didn't charge one.
+     * Both shapes carry qty/unit_price/amount uniformly for the invoice table.
      */
     public function lineItems(): array
     {
+        if ($this->items->isNotEmpty()) {
+            return $this->items->map(fn (BillItem $item) => [
+                'label' => $item->particular,
+                'qty' => (float) $item->qty,
+                'unit_price' => (float) $item->unit_price,
+                'amount' => (float) $item->total,
+            ])->all();
+        }
+
         $items = [];
 
         if ((float) $this->admission_fee_amount > 0) {
             $items[] = [
                 'label' => 'Admission Fee',
+                'qty' => 1.0,
+                'unit_price' => (float) $this->admission_fee_amount,
                 'amount' => (float) $this->admission_fee_amount,
             ];
         }
 
         $items[] = [
             'label' => 'Monthly Charge ('.$this->created_at->format('F Y').')',
+            'qty' => 1.0,
+            'unit_price' => (float) $this->monthly_amount,
             'amount' => (float) $this->monthly_amount,
         ];
 

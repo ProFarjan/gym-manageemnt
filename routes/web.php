@@ -195,6 +195,9 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
         Route::get('/bills/{bill}/view-panel', [BillController::class, 'viewPanel'])->name('bills.view-panel');
     });
     Route::middleware('permission:bills.create')->group(function () {
+        Route::get('/bills/create-panel', [BillController::class, 'createPanel'])->name('bills.create-panel');
+        Route::get('/bills/members-search', [BillController::class, 'membersSearch'])->name('bills.members-search');
+        Route::post('/bills', [BillController::class, 'store'])->name('bills.store');
         Route::get('/bills/{bill}/pay-panel', [BillController::class, 'payPanel'])->name('bills.pay-panel');
         Route::post('/bills/{bill}/pay', [BillController::class, 'pay'])->name('bills.pay');
     });

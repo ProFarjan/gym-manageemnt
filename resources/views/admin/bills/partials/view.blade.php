@@ -3,6 +3,8 @@
     $paid = $bill->paidAmount();
     $balance = $bill->balanceDue();
     $discountGiven = $bill->discountGiven();
+    $lineItems = $bill->lineItems();
+    $subtotal = collect($lineItems)->sum('amount');
 @endphp
 
 <style>
@@ -43,6 +45,9 @@
         <strong>Bill No:</strong> {{ $bill->bill_number }}<br>
         <strong>Date:</strong> {{ $bill->created_at->format('d M Y') }}<br>
         <strong>Due Date:</strong> {{ $bill->due_date?->format('d M Y') ?? '—' }}
+        @if ($bill->duration_months)
+            <br><strong>Duration:</strong> {{ $bill->duration_months }} Month(s)
+        @endif
     </div>
     <div class="col-md-6">
         <strong>Member:</strong> {{ $bill->member->full_name }}<br>
@@ -56,46 +61,50 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Description</th>
-                <th class="text-end">Amount (BDT)</th>
+                <th>Particulars</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Total (BDT)</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($bill->lineItems() as $i => $item)
+            @foreach ($lineItems as $i => $item)
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $item['label'] }}</td>
+                    <td class="text-end">{{ rtrim(rtrim(number_format($item['qty'], 2), '0'), '.') }}</td>
+                    <td class="text-end">{{ number_format($item['unit_price'], 2) }}</td>
                     <td class="text-end">{{ number_format($item['amount'], 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="2" class="text-end">Subtotal</td>
-                <td class="text-end">{{ number_format($bill->admission_fee_amount + $bill->monthly_amount, 2) }}</td>
+                <td colspan="4" class="text-end">Subtotal</td>
+                <td class="text-end">{{ number_format($subtotal, 2) }}</td>
             </tr>
             @if ($bill->discount_amount > 0)
                 <tr>
-                    <td colspan="2" class="text-end">Discount</td>
+                    <td colspan="4" class="text-end">Discount</td>
                     <td class="text-end">-{{ number_format($bill->discount_amount, 2) }}</td>
                 </tr>
             @endif
             <tr class="fw-bold">
-                <td colspan="2" class="text-end">Total</td>
+                <td colspan="4" class="text-end">Grand Total</td>
                 <td class="text-end">{{ number_format($bill->amount, 2) }}</td>
             </tr>
             <tr>
-                <td colspan="2" class="text-end">Paid</td>
+                <td colspan="4" class="text-end">Paid</td>
                 <td class="text-end">{{ number_format($paid, 2) }}</td>
             </tr>
             @if ($discountGiven > 0)
                 <tr>
-                    <td colspan="2" class="text-end text-muted small">— of which discounted</td>
+                    <td colspan="4" class="text-end text-muted small">— of which discounted</td>
                     <td class="text-end text-muted small">{{ number_format($discountGiven, 2) }}</td>
                 </tr>
             @endif
             <tr class="fw-bold">
-                <td colspan="2" class="text-end">Balance Due</td>
+                <td colspan="4" class="text-end">Balance Due</td>
                 <td class="text-end">{{ number_format($balance, 2) }}</td>
             </tr>
         </tfoot>
