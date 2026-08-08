@@ -4,9 +4,14 @@
     <meta charset="utf-8">
     <style>
         body { font-family: sans-serif; font-size: 13px; color: #222; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 20px; color: #d6336c; }
-        .header p { margin: 2px 0; font-size: 11px; color: #555; }
+        .header { text-align: center; border-bottom: 2px solid #d6336c; padding-bottom: 12px; margin-bottom: 20px; }
+        .header-table { width: auto; margin: 0 auto; }
+        .header-table td { vertical-align: middle; }
+        .header-logo-cell { width: 90px; }
+        .header-logo-cell img { height: 50px; }
+        .header-info-cell { text-align: left; padding-left: 14px; }
+        .header-info-cell h1 { margin: 0; font-size: 20px; color: #d6336c; }
+        .header-info-cell p { margin: 2px 0; font-size: 11px; color: #555; }
         .meta { width: 100%; margin-bottom: 20px; }
         .meta td { padding: 3px 0; vertical-align: top; }
         table.items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -19,16 +24,24 @@
 </head>
 <body>
     <div class="header">
-        @if (setting('logo_path'))
-            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->path(setting('logo_path')) }}" style="height:48px; margin-bottom:6px;">
-        @endif
-        <h1>{{ setting('business_name', config('app.name')) }}</h1>
-        @if (setting('business_address'))
-            <p>{{ setting('business_address') }}</p>
-        @endif
-        @if (setting('business_phone'))
-            <p>Phone: {{ setting('business_phone') }}</p>
-        @endif
+        <table class="header-table">
+            <tr>
+                <td class="header-logo-cell">
+                    @if (setting('logo_path'))
+                        <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->path(setting('logo_path')) }}">
+                    @endif
+                </td>
+                <td class="header-info-cell">
+                    <h1>{{ setting('business_name', config('app.name')) }}</h1>
+                    @if (setting('business_address'))
+                        <p>{{ setting('business_address') }}</p>
+                    @endif
+                    @if (setting('business_phone'))
+                        <p>Phone: {{ setting('business_phone') }}</p>
+                    @endif
+                </td>
+            </tr>
+        </table>
     </div>
 
     <h2 style="text-align:center; font-size:16px;">Payment Receipt / Invoice</h2>
@@ -60,7 +73,14 @@
         <tbody>
             <tr>
                 <td>
-                    {{ ucfirst(str_replace('_', ' ', $payment->type)) }} Payment
+                    @if ($payment->bill)
+                        {{ collect($payment->bill->lineItems())->pluck('label')->implode(', ') }}
+                    @else
+                        {{ ucfirst(str_replace('_', ' ', $payment->type)) }} Payment
+                    @endif
+                    @if ($payment->notes)
+                        <br><small>{{ $payment->notes }}</small>
+                    @endif
                     @if ($payment->period_start && $payment->period_end)
                         <br><small>Period: {{ $payment->period_start->format('d M Y') }} - {{ $payment->period_end->format('d M Y') }}</small>
                     @endif

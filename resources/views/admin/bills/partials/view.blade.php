@@ -8,53 +8,73 @@
 @endphp
 
 <style>
+    .bill-print-header {
+        text-align: center;
+        border-bottom: 2px solid #d6336c;
+        padding-bottom: 12px;
+    }
+    .bill-print-header-inner {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        text-align: left;
+    }
+    .bill-print-logo {
+        height: 50px;
+    }
+    .bill-meta-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
     @media print {
+        html, body { background: #fff !important; }
         body * { visibility: hidden; }
         #billActionModal, #billActionModal * { visibility: visible; }
         #billActionModal .modal-dialog { max-width: 100%; margin: 0; }
-        #billActionModal .modal-content { border: none; }
+        #billActionModal .modal-content { border: none; background: #fff !important; }
         #billActionModal .modal-header,
-        #billActionModal .no-print { display: none !important; }
-        #billActionModal { position: absolute; inset: 0; }
+        #billActionModal .no-print,
+        .modal-backdrop { display: none !important; }
+        #billActionModal { position: absolute; inset: 0; background: #fff !important; }
     }
 </style>
 
-<div class="text-end mb-3 no-print">
-    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
-        <i class="bi bi-printer"></i> Print
-    </button>
-</div>
-
-<div class="text-center mb-3">
-    @if (setting('logo_path'))
-        <img src="{{ asset('storage/'.setting('logo_path')) }}" style="height:48px;" class="mb-2">
-    @endif
-    <h5 class="mb-0">{{ setting('business_name', config('app.name')) }}</h5>
-    @if (setting('business_address'))
-        <p class="small text-muted mb-0">{{ setting('business_address') }}</p>
-    @endif
-    @if (setting('business_phone'))
-        <p class="small text-muted mb-0">Phone: {{ setting('business_phone') }}</p>
-    @endif
+<div class="bill-print-header mb-3">
+    <div class="bill-print-header-inner">
+        @if (setting('logo_path'))
+            <img src="{{ asset('storage/'.setting('logo_path')) }}" class="bill-print-logo">
+        @endif
+        <div>
+            <h5 class="mb-0">{{ setting('business_name', config('app.name')) }}</h5>
+            @if (setting('business_address'))
+                <p class="small text-muted mb-0">{{ setting('business_address') }}</p>
+            @endif
+            @if (setting('business_phone'))
+                <p class="small text-muted mb-0">Phone: {{ setting('business_phone') }}</p>
+            @endif
+        </div>
+    </div>
 </div>
 
 <h6 class="text-center text-uppercase mb-3">Bill / Invoice</h6>
 
-<div class="row mb-3">
-    <div class="col-md-6">
-        <strong>Bill No:</strong> {{ $bill->bill_number }}<br>
-        <strong>Date:</strong> {{ $bill->created_at->format('d M Y') }}<br>
-        <strong>Due Date:</strong> {{ $bill->due_date?->format('d M Y') ?? '—' }}
-        @if ($bill->duration_months)
-            <br><strong>Duration:</strong> {{ $bill->duration_months }} Month(s)
-        @endif
-    </div>
-    <div class="col-md-6">
-        <strong>Member:</strong> {{ $bill->member->full_name }}<br>
-        <strong>Admission ID:</strong> {{ $bill->member->admission_id }}<br>
-        <strong>Mobile:</strong> {{ $bill->member->mobile_number }}
-    </div>
-</div>
+<table class="bill-meta-table mb-3">
+    <tr>
+        <td class="w-50 align-top">
+            <strong>Bill No:</strong> {{ $bill->bill_number }}<br>
+            <strong>Date:</strong> {{ $bill->created_at->format('d M Y') }}<br>
+            <strong>Due Date:</strong> {{ $bill->due_date?->format('d M Y') ?? '—' }}
+            @if ($bill->duration_months)
+                <br><strong>Duration:</strong> {{ $bill->duration_months }} Month(s)
+            @endif
+        </td>
+        <td class="w-50 align-top">
+            <strong>Member:</strong> {{ $bill->member->full_name }}<br>
+            <strong>Admission ID:</strong> {{ $bill->member->admission_id }}<br>
+            <strong>Mobile:</strong> {{ $bill->member->mobile_number }}
+        </td>
+    </tr>
+</table>
 
 <div class="table-responsive">
     <table class="table table-bordered mb-3">
@@ -111,7 +131,7 @@
     </table>
 </div>
 
-<p class="mb-3">
+<p class="mb-3 no-print">
     <strong>Status:</strong>
     <span class="badge bg-{{ match($status) {
         'paid' => 'success',

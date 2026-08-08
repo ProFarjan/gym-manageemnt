@@ -157,12 +157,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const billActionModal = new window.Bootstrap.Modal(billActionModalEl);
         const modalTitle = document.getElementById('billActionModalLabel');
         const modalBody = document.getElementById('billActionModalBody');
+        const printBtn = document.getElementById('billActionModalPrintBtn');
+
+        printBtn?.addEventListener('click', () => window.print());
 
         document.querySelectorAll('[data-modal-url]').forEach((link) => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 modalTitle.textContent = link.dataset.modalTitle || '';
                 modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
+                printBtn?.classList.add('d-none');
                 billActionModal.show();
 
                 fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -173,6 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then((html) => {
                         modalBody.innerHTML = html;
                         modalBody.querySelectorAll('.invoice-date-picker').forEach(attachDatepicker);
+                        // Only the View panel is printable — its markup always
+                        // includes the letterhead header built for print.
+                        printBtn?.classList.toggle('d-none', !modalBody.querySelector('.bill-print-header'));
                     })
                     .catch(() => {
                         modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';

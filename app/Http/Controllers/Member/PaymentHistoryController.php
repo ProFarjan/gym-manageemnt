@@ -22,7 +22,7 @@ class PaymentHistoryController extends Controller
     {
         abort_unless($payment->member_id === Auth::guard('member')->id(), 403);
 
-        $payment->load('member', 'paymentAccount');
+        $payment->load('member', 'paymentAccount', 'bill.items');
 
         $pdf = Pdf::loadView('pdf.receipt', ['payment' => $payment]);
 

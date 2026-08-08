@@ -30,20 +30,24 @@
         @endforeach
     </div>
 
-    <div class="row g-3">
+    <div class="row g-3 align-items-stretch">
         <div class="col-md-8">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-header">Revenue (Last 6 Months)</div>
                 <div class="card-body">
-                    <canvas id="revenueChart" height="90"></canvas>
+                    <div style="height: 280px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-header">Membership Breakdown</div>
                 <div class="card-body">
-                    <canvas id="membershipChart" height="90"></canvas>
+                    <div style="height: 280px;">
+                        <canvas id="membershipChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -66,7 +70,7 @@
                         tension: 0.3,
                     }],
                 },
-                options: { responsive: true, plugins: { legend: { display: false } } },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
             });
 
             new Chart(document.getElementById('membershipChart'), {
@@ -78,7 +82,7 @@
                         backgroundColor: ['#198754', '#6c757d', '#212529', '#ffc107'],
                     }],
                 },
-                options: { responsive: true },
+                options: { responsive: true, maintainAspectRatio: false },
             });
         });
     </script>

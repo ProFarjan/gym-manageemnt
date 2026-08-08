@@ -51,8 +51,11 @@
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="billActionModalLabel">&nbsp;</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title me-auto" id="billActionModalLabel">&nbsp;</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-2 d-none" id="billActionModalPrintBtn">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                    <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="billActionModalBody">
                     <div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>

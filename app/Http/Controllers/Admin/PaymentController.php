@@ -67,7 +67,7 @@ class PaymentController extends Controller
 
     public function receipt(Payment $payment)
     {
-        $payment->load('member', 'paymentAccount');
+        $payment->load('member', 'paymentAccount', 'bill.items');
 
         $pdf = Pdf::loadView('pdf.receipt', ['payment' => $payment]);
 
