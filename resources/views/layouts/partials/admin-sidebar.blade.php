@@ -157,7 +157,7 @@
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}"
-                       href="{{ route('admin.settings.edit') }}">
+                       href="{{ route('admin.settings.index') }}">
                         <i class="bi bi-gear"></i><span>Settings</span>
                     </a>
                 </li>

@@ -195,7 +195,15 @@ $admin-content-bg: #f4f5f9;
             letter-spacing: .08em;
         }
 
-        .nav-link { padding: .55rem 1.25rem; font-size: .86rem; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: .85rem;
+            padding: .55rem 1.25rem;
+            font-size: .86rem;
+
+            i.bi:first-child { font-size: 1.05rem; width: 1.1rem; text-align: center; flex-shrink: 0; }
+        }
     }
 
     // ---------------------------------------------------------------

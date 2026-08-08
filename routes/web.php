@@ -271,10 +271,11 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
 
     // Settings
     Route::middleware('permission:settings.view')->group(function () {
-        Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::get('/settings/{section}', [SettingController::class, 'edit'])->name('settings.edit');
     });
     Route::middleware('permission:settings.update')->group(function () {
-        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::put('/settings/{section}', [SettingController::class, 'update'])->name('settings.update');
     });
 
     // Gallery

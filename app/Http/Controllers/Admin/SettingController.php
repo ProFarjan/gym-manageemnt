@@ -10,46 +10,101 @@ use Illuminate\Support\Facades\Storage;
 class SettingController extends Controller
 {
     /**
-     * Plain text/select settings this form manages. Checkboxes and the logo
-     * file are handled separately in update() since they need different
-     * request handling (boolean presence, file upload).
+     * One card on the index page per section, and one dedicated edit page
+     * each — settings used to be a single giant form; each section now
+     * saves independently.
      */
-    private const TEXT_KEYS = [
-        'business_name', 'business_tagline', 'business_address', 'business_phone',
-        'membership_prefix', 'gym_closing_time',
-        'sms_driver', 'sms_api_key', 'sms_sender_id',
-        'mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name',
-        'bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password',
-        'nagad_merchant_id', 'nagad_merchant_key',
-        'zkteco_ip', 'zkteco_port', 'zkteco_device_id',
-        'invoice_footer',
+    private const SECTIONS = [
+        'business' => [
+            'label' => 'Business Information',
+            'description' => 'Gym name, contact details, and the logo shown on receipts and invoices.',
+        ],
+        'membership' => [
+            'label' => 'Membership',
+            'description' => 'Admission ID prefix and the auto-checkout closing time.',
+        ],
+        'sms' => [
+            'label' => 'SMS Gateway',
+            'description' => 'SMS provider credentials used for member notifications.',
+        ],
+        'email' => [
+            'label' => 'Email (SMTP) Settings',
+            'description' => 'Outgoing mail server configuration.',
+        ],
+        'bkash' => [
+            'label' => 'bKash Settings',
+            'description' => 'bKash merchant credentials for online payments.',
+        ],
+        'nagad' => [
+            'label' => 'Nagad Settings',
+            'description' => 'Nagad merchant credentials for online payments.',
+        ],
+        'zkteco' => [
+            'label' => 'ZKTeco Device Settings',
+            'description' => 'Biometric device connection details for attendance sync.',
+        ],
+        'invoice' => [
+            'label' => 'Invoice Footer',
+            'description' => 'Footer note printed on bills and payment receipts.',
+        ],
     ];
 
-    private const CHECKBOX_KEYS = ['bkash_sandbox', 'nagad_sandbox'];
+    /**
+     * Plain text/select keys per section. Checkboxes and the logo file are
+     * handled separately below since they need different request handling
+     * (boolean presence, file upload).
+     */
+    private const SECTION_KEYS = [
+        'business' => ['business_name', 'business_tagline', 'business_address', 'business_phone'],
+        'membership' => ['membership_prefix', 'gym_closing_time'],
+        'sms' => ['sms_driver', 'sms_api_key', 'sms_sender_id'],
+        'email' => ['mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name'],
+        'bkash' => ['bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password'],
+        'nagad' => ['nagad_merchant_id', 'nagad_merchant_key'],
+        'zkteco' => ['zkteco_ip', 'zkteco_port', 'zkteco_device_id'],
+        'invoice' => ['invoice_footer'],
+    ];
 
-    public function edit()
+    private const SECTION_CHECKBOX_KEYS = [
+        'bkash' => ['bkash_sandbox'],
+        'nagad' => ['nagad_sandbox'],
+    ];
+
+    public function index()
     {
-        $settings = Setting::cached();
-
-        return view('admin.settings.edit', compact('settings'));
+        return view('admin.settings.index', ['sections' => self::SECTIONS]);
     }
 
-    public function update(Request $request)
+    public function edit(string $section)
     {
-        $data = $request->validate([
-            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,svg', 'max:1024'],
-            'mail_port' => ['nullable', 'integer'],
-        ]);
+        abort_unless(array_key_exists($section, self::SECTIONS), 404);
 
-        foreach (self::TEXT_KEYS as $key) {
+        $settings = Setting::cached();
+        $meta = self::SECTIONS[$section];
+
+        return view("admin.settings.{$section}", compact('settings', 'section', 'meta'));
+    }
+
+    public function update(Request $request, string $section)
+    {
+        abort_unless(array_key_exists($section, self::SECTIONS), 404);
+
+        if ($section === 'business') {
+            $request->validate(['logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,svg', 'max:1024']]);
+        }
+        if ($section === 'email') {
+            $request->validate(['mail_port' => ['nullable', 'integer']]);
+        }
+
+        foreach (self::SECTION_KEYS[$section] as $key) {
             Setting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
         }
 
-        foreach (self::CHECKBOX_KEYS as $key) {
+        foreach (self::SECTION_CHECKBOX_KEYS[$section] ?? [] as $key) {
             Setting::updateOrCreate(['key' => $key], ['value' => $request->boolean($key) ? '1' : '0']);
         }
 
-        if ($request->hasFile('logo')) {
+        if ($section === 'business' && $request->hasFile('logo')) {
             $existing = Setting::where('key', 'logo_path')->value('value');
             if ($existing) {
                 Storage::disk('public')->delete($existing);
@@ -58,6 +113,7 @@ class SettingController extends Controller
             Setting::updateOrCreate(['key' => 'logo_path'], ['value' => $path]);
         }
 
-        return redirect()->route('admin.settings.edit')->with('status', 'Settings updated.');
+        return redirect()->route('admin.settings.edit', $section)
+            ->with('status', self::SECTIONS[$section]['label'].' updated.');
     }
 }
