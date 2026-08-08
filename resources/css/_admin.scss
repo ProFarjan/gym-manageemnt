@@ -521,3 +521,27 @@ $admin-content-bg: #f4f5f9;
         background: rgba(255, 255, 255, .08);
     }
 }
+
+// Hand-rolled AJAX searchable member select (Create Bill form) — plain
+// text input + hidden value input + an absolutely positioned results
+// list, no third-party dropdown library involved.
+.member-ajax-select {
+    position: relative;
+
+    .member-ajax-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1060;
+        max-height: 240px;
+        overflow-y: auto;
+        margin-top: 2px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .list-group-item-action {
+        cursor: pointer;
+        font-size: .875rem;
+    }
+}

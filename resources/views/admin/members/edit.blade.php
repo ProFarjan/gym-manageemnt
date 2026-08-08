@@ -124,7 +124,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Discount Amount</label>
-                        <input type="number" step="0.01" name="discount_amount" value="{{ old('discount_amount', $member->discount_amount) }}" class="form-control" placeholder="0.00">
+                        <input type="text" inputmode="decimal" name="discount_amount" value="{{ old('discount_amount', number_format((float) $member->discount_amount, 2, '.', '')) }}" class="form-control" placeholder="0.00">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Discount Reason</label>

@@ -6,6 +6,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h4 mb-0">{{ $member->full_name }} <span class="text-muted small">({{ $member->admission_id }})</span></h1>
         <div class="member-action-group">
+            @can('members.view')
+                <a href="{{ route('admin.members.print', $member) }}" target="_blank" class="btn btn-outline-dark">Print</a>
+            @endcan
             @can('members.update')
                 <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-secondary">Edit</a>
             @endcan

@@ -6,13 +6,16 @@
     </div>
     <div class="col-md-6">
         <label class="form-label small mb-0">Invoice Date</label>
-        <input type="date" name="due_date" class="form-control form-control-sm" value="{{ now()->format('Y-m-d') }}">
+        <input type="text" name="due_date" class="form-control form-control-sm invoice-date-picker" value="{{ now()->format('Y-m-d') }}" autocomplete="off">
     </div>
 
     <div class="col-md-6">
         <label class="form-label small mb-0">Select Member</label>
-        <select name="member_id" class="form-select form-select-sm member-select2" data-ajax-url="{{ route('admin.bills.members-search') }}" required>
-        </select>
+        <div class="member-ajax-select" data-ajax-url="{{ route('admin.bills.members-search') }}">
+            <input type="text" class="form-control form-control-sm member-ajax-input" placeholder="Search by name, phone or member ID" autocomplete="off" required>
+            <input type="hidden" name="member_id" class="member-ajax-value">
+            <div class="list-group member-ajax-results d-none"></div>
+        </div>
     </div>
     <div class="col-md-6">
         <label class="form-label small mb-0">Duration (Month)</label>

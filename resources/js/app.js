@@ -1,6 +1,5 @@
 import './bootstrap';
 import * as Bootstrap from 'bootstrap';
-import $ from 'jquery';
 import { Chart, registerables } from 'chart.js';
 import AOS from 'aos';
 import flatpickr from 'flatpickr';
@@ -8,12 +7,8 @@ import flatpickr from 'flatpickr';
 Chart.register(...registerables);
 
 window.Bootstrap = Bootstrap;
-window.$ = window.jQuery = $;
 window.Chart = Chart;
 window.AOS = AOS;
-
-// select2 attaches itself to the jQuery instance above at import time.
-import 'select2';
 
 document.addEventListener('DOMContentLoaded', () => {
     AOS.init({ duration: 700, once: true, offset: 80 });
@@ -90,17 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.querySelectorAll('.dob-datepicker').forEach((input) => {
-        flatpickr(input, {
-            dateFormat: 'Y-m-d',
-            altInput: true,
-            altFormat: 'd M Y',
-            minDate: input.dataset.min || null,
-            maxDate: input.dataset.max || null,
-            allowInput: false,
-            disableMobile: true,
-        });
-    });
+    document.querySelectorAll('.dob-datepicker').forEach(attachDatepicker);
 
     document.querySelectorAll('input[type="file"][data-preview]').forEach((input) => {
         const preview = document.getElementById(input.dataset.preview);
@@ -187,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                     .then((html) => {
                         modalBody.innerHTML = html;
-                        initMemberSelect2(modalBody);
+                        modalBody.querySelectorAll('.invoice-date-picker').forEach(attachDatepicker);
                     })
                     .catch(() => {
                         modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
@@ -196,29 +181,99 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Create Bill form: Select2 AJAX member picker (searches by name, phone,
-    // or member ID server-side — member counts will outgrow what's sane to
-    // embed client-side). Initialized after the create panel's HTML lands in
-    // the modal, since the <select> doesn't exist until then.
-    function initMemberSelect2(container) {
-        const el = container.querySelector('.member-select2');
-        if (!el || !window.$.fn.select2) return;
+    // Create Bill form: AJAX searchable member picker. Plain fetch() against
+    // the server-side search endpoint — no dropdown library involved, so
+    // there's nothing that depends on jQuery/Select2 loading correctly
+    // inside a dynamically-injected Bootstrap modal. Delegated since the
+    // form is injected into the modal via fetch, same as everything else on
+    // this page.
+    document.addEventListener('input', (e) => {
+        if (!e.target.classList.contains('member-ajax-input')) return;
 
-        window.$(el).select2({
-            dropdownParent: window.$(container),
-            width: '100%',
-            placeholder: 'Search by name, phone or member ID',
-            minimumInputLength: 1,
-            ajax: {
-                url: el.dataset.ajaxUrl,
-                dataType: 'json',
-                delay: 300,
-                data: (params) => ({ q: params.term, page: params.page || 1 }),
-                processResults: (data, params) => {
-                    params.page = params.page || 1;
-                    return { results: data.results, pagination: data.pagination };
-                },
-            },
+        const wrapper = e.target.closest('.member-ajax-select');
+        const resultsEl = wrapper?.querySelector('.member-ajax-results');
+        const valueInput = wrapper?.querySelector('.member-ajax-value');
+        if (!wrapper || !resultsEl || !valueInput) return;
+
+        valueInput.value = '';
+
+        const query = e.target.value.trim();
+
+        clearTimeout(wrapper._memberSearchTimeout);
+        wrapper._memberSearchTimeout = setTimeout(() => {
+            const url = new URL(wrapper.dataset.ajaxUrl, window.location.origin);
+            if (query) url.searchParams.set('q', query);
+
+            resultsEl.innerHTML = '<span class="list-group-item text-muted">Searching…</span>';
+            resultsEl.classList.remove('d-none');
+
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then((response) => {
+                    if (!response.ok) throw new Error('Request failed');
+                    return response.json();
+                })
+                .then((data) => {
+                    const results = data.results || [];
+                    resultsEl.innerHTML = results
+                        .map((m) => `<button type="button" class="list-group-item list-group-item-action" data-id="${m.id}" data-text="${String(m.text).replace(/"/g, '&quot;')}">${m.text}</button>`)
+                        .join('') || '<span class="list-group-item text-muted">No matches</span>';
+                    resultsEl.classList.remove('d-none');
+                })
+                .catch(() => {
+                    resultsEl.innerHTML = '<span class="list-group-item text-danger">Search failed — please try again.</span>';
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', (e) => {
+        const option = e.target.closest('.member-ajax-results button[data-id]');
+        if (!option) return;
+
+        const wrapper = option.closest('.member-ajax-select');
+        const input = wrapper?.querySelector('.member-ajax-input');
+        const valueInput = wrapper?.querySelector('.member-ajax-value');
+        const resultsEl = wrapper?.querySelector('.member-ajax-results');
+        if (!wrapper || !input || !valueInput || !resultsEl) return;
+
+        input.value = option.dataset.text;
+        valueInput.value = option.dataset.id;
+        resultsEl.classList.add('d-none');
+        resultsEl.innerHTML = '';
+    });
+
+    document.addEventListener('focusin', (e) => {
+        const wrapper = e.target.closest('.member-ajax-select');
+        if (!wrapper || !e.target.classList.contains('member-ajax-input')) return;
+
+        // Re-show whatever was already loaded when the field regains focus,
+        // so clicking back in doesn't require retyping to see the list.
+        const resultsEl = wrapper.querySelector('.member-ajax-results');
+        if (resultsEl && resultsEl.innerHTML.trim()) {
+            resultsEl.classList.remove('d-none');
+        } else {
+            wrapper.querySelector('.member-ajax-input').dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        document.querySelectorAll('.member-ajax-select').forEach((wrapper) => {
+            if (wrapper.contains(e.target)) return;
+            wrapper.querySelector('.member-ajax-results')?.classList.add('d-none');
+        });
+    });
+
+    // Shared flatpickr attachment for any text input that wants a calendar
+    // picker (member Date of Birth on the full-page member forms, Invoice
+    // Date inside the AJAX-loaded Create Bill modal).
+    function attachDatepicker(input) {
+        flatpickr(input, {
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd M Y',
+            minDate: input.dataset.min || null,
+            maxDate: input.dataset.max || null,
+            allowInput: false,
+            disableMobile: true,
         });
     }
 

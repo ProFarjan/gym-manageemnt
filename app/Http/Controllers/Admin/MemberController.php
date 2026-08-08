@@ -100,6 +100,18 @@ class MemberController extends Controller
     }
 
     /**
+     * Printable membership application form — a standalone page (not the
+     * admin layout) opened in a new tab and printed via the browser, same
+     * pattern as the Bill view/print modal.
+     */
+    public function print(Member $member)
+    {
+        $member->load(['membershipPlan', 'registeredBy']);
+
+        return view('admin.members.print', compact('member'));
+    }
+
+    /**
      * Modal panel: record-payment form.
      */
     public function payDuePanel(Member $member)

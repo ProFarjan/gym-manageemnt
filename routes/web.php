@@ -82,6 +82,7 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     });
     Route::middleware('permission:members.view')->group(function () {
         Route::get('/members/{member}', [AdminMemberController::class, 'show'])->name('members.show');
+        Route::get('/members/{member}/print', [AdminMemberController::class, 'print'])->name('members.print');
     });
 
     // Member Action Panels (AJAX modal fragments, shown from the Members index dropdown)
