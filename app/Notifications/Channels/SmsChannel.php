@@ -2,15 +2,14 @@
 
 namespace App\Notifications\Channels;
 
+use App\Services\SmsGateway;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Stub SMS channel. No SMS gateway account has been configured yet (SRS calls
- * for a configurable "SMS Gateway" — see Admin > Settings), so this logs what
- * would be sent instead of calling a real provider. Swap the body for an HTTP
- * call to the chosen gateway (common BD providers use a simple REST API)
- * once real driver/API key/sender ID are set in Settings.
+ * Sends through the generic gateway configured at Admin > Settings > SMS
+ * Gateway when enabled; otherwise logs what would have been sent so nothing
+ * throws while the gateway is off or unconfigured.
  */
 class SmsChannel
 {
@@ -27,9 +26,17 @@ class SmsChannel
         }
 
         $message = $notification->toSms($notifiable);
-        $driver = setting('sms_driver', 'log');
-        $sender = setting('sms_sender_id');
 
-        Log::info("[SMS stub via {$driver}".($sender ? " from {$sender}" : '')."] To {$mobile}: {$message}");
+        if (! setting('sms_enabled')) {
+            Log::info("[SMS stub, gateway disabled] To {$mobile}: {$message}");
+
+            return;
+        }
+
+        $result = SmsGateway::send($mobile, $message);
+
+        if (! $result['success']) {
+            Log::warning("[SMS send failed] To {$mobile}: {$result['message']}");
+        }
     }
 }
