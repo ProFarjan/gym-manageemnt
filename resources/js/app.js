@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.querySelectorAll('.dob-datepicker').forEach(attachDatepicker);
+    document.querySelectorAll('.admission-report-datepicker').forEach(attachDatepicker);
 
     document.querySelectorAll('input[type="file"][data-preview]').forEach((input) => {
         const preview = document.getElementById(input.dataset.preview);

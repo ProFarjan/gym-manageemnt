@@ -9,6 +9,7 @@ use App\Models\Expense;
 use App\Models\Member;
 use App\Models\Offer;
 use App\Models\Payment;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -37,23 +38,47 @@ class ReportController extends Controller
 
     public function admissions(Request $request)
     {
+        // The filter-only landing state (nothing searched yet) is the
+        // default — a hidden "search" field on the form is what flips this
+        // to true, so submitting with every field left blank still counts
+        // as a real search (show everything in the default date range)
+        // rather than looking like a fresh, un-searched page load.
+        $searched = $request->boolean('search') || $request->filled('format');
+
         [$from, $to] = $this->dateRange($request);
+        $registeredBy = $request->query('registered_by');
+        $address = $request->query('address');
 
-        $rows = Member::with('membershipPlan')
-            ->whereNotNull('admission_date')
-            ->whereBetween('admission_date', [$from, $to])
-            ->orderBy('admission_date')
-            ->get()
-            ->map(fn (Member $m) => [
-                $m->admission_id,
-                $m->full_name,
-                $m->mobile_number,
-                $m->membershipPlan?->name ?? '—',
-                ucfirst($m->registration_type),
-                $m->admission_date->format('d M Y'),
-            ]);
+        $rows = collect();
 
-        return $this->respond($request, 'Admission Report', ['Admission ID', 'Name', 'Mobile', 'Plan', 'Registered By', 'Admission Date'], $rows, true);
+        if ($searched) {
+            $rows = Member::with(['membershipPlan', 'registeredBy'])
+                ->whereNotNull('admission_date')
+                ->whereBetween('admission_date', [$from, $to])
+                ->when($registeredBy, fn ($q) => $q->where('registered_by', $registeredBy))
+                ->when($address, fn ($q) => $q->where('address', 'like', "%{$address}%"))
+                ->orderBy('admission_date')
+                ->get()
+                ->map(fn (Member $m) => [
+                    $m->admission_id,
+                    $m->full_name,
+                    $m->mobile_number,
+                    $m->membershipPlan?->name ?? '—',
+                    $m->registeredBy?->name ?? '—',
+                    $m->admission_date->format('d M Y'),
+                ]);
+        }
+
+        return $this->respond($request, 'Admission Report', ['Admission ID', 'Name', 'Mobile', 'Plan', 'Registered By', 'Admission Date'], $rows, true, 'admin.reports.admissions', [
+            'searched' => $searched,
+            'filters' => [
+                'from' => $from->format('Y-m-d'),
+                'to' => $to->format('Y-m-d'),
+                'registered_by' => $registeredBy,
+                'address' => $address,
+            ],
+            'staffUsers' => User::orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     public function members(Request $request)
@@ -262,7 +287,13 @@ class ReportController extends Controller
         return [$from, $to];
     }
 
-    private function respond(Request $request, string $title, array $headings, iterable $rows, bool $showDateFilter)
+    /**
+     * @param  string|null  $view  Defaults to the generic 'admin.reports.show' — pass a
+     *                             dedicated view name for a report with its own filter UI
+     *                             (e.g. admissions).
+     * @param  array<string, mixed>  $viewData  Extra data merged in for that dedicated view.
+     */
+    private function respond(Request $request, string $title, array $headings, iterable $rows, bool $showDateFilter, ?string $view = null, array $viewData = [])
     {
         $rowsArray = collect($rows)->values()->all();
 
@@ -276,11 +307,15 @@ class ReportController extends Controller
             return $pdf->stream(Str::slug($title).'.pdf');
         }
 
-        return view('admin.reports.show', [
+        if ($request->query('format') === 'print') {
+            return view('admin.reports.print', compact('title', 'headings', 'rowsArray'));
+        }
+
+        return view($view ?? 'admin.reports.show', array_merge([
             'title' => $title,
             'headings' => $headings,
             'rows' => $rowsArray,
             'showDateFilter' => $showDateFilter,
-        ]);
+        ], $viewData));
     }
 }
