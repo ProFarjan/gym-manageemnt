@@ -123,6 +123,16 @@
 
         <button type="submit" class="btn btn-primary">Save Settings</button>
     </form>
+
+    <div class="card mt-4 ajax-panel" data-panel-url="{{ route('admin.settings.sms.sms-logs') }}">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>SMS Log</span>
+            <input type="text" class="form-control form-control-sm" style="max-width:240px;" placeholder="Search number or message" data-ajax-param="search">
+        </div>
+        <div class="ajax-panel-results">
+            @include('admin.settings.partials._sms-logs-table', ['smsLogs' => $smsLogs])
+        </div>
+    </div>
 @endsection
 
 @push('scripts')

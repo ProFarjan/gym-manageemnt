@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MailLog;
 use App\Models\Setting;
+use App\Models\SmsLog;
 use App\Models\ZKTecoCommand;
 use App\Services\SmsGateway;
 use App\Services\ZKTeco\ZKTecoDeviceClient;
@@ -93,6 +94,12 @@ class SettingController extends Controller
             $mailLogs = MailLog::latest('id')->paginate(10);
 
             return view('admin.settings.email', compact('settings', 'section', 'meta', 'mailLogs'));
+        }
+
+        if ($section === 'sms') {
+            $smsLogs = SmsLog::latest('id')->paginate(10);
+
+            return view('admin.settings.sms', compact('settings', 'section', 'meta', 'smsLogs'));
         }
 
         return view("admin.settings.{$section}", compact('settings', 'section', 'meta'));
@@ -302,5 +309,25 @@ class SettingController extends Controller
             ->withQueryString();
 
         return view('admin.settings.partials._mail-logs-table', compact('mailLogs'));
+    }
+
+    /**
+     * AJAX: search/paginate the SMS Log table on Settings > SMS Gateway.
+     */
+    public function smsLogs(Request $request)
+    {
+        $smsLogs = SmsLog::query()
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->string('search');
+                $q->where(function ($q) use ($search) {
+                    $q->where('to_number', 'like', "%{$search}%")
+                        ->orWhere('message', 'like', "%{$search}%");
+                });
+            })
+            ->latest('id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.settings.partials._sms-logs-table', compact('smsLogs'));
     }
 }

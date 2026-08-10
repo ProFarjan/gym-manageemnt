@@ -275,6 +275,7 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
         Route::get('/settings/zkteco/users', [SettingController::class, 'zktecoUsers'])->name('settings.zkteco.users');
         Route::get('/settings/zkteco/commands', [SettingController::class, 'zktecoCommandsIndex'])->name('settings.zkteco.commands.index');
         Route::get('/settings/email/mail-logs', [SettingController::class, 'emailMailLogs'])->name('settings.email.mail-logs');
+        Route::get('/settings/sms/sms-logs', [SettingController::class, 'smsLogs'])->name('settings.sms.sms-logs');
         Route::get('/settings/{section}', [SettingController::class, 'edit'])->name('settings.edit');
     });
     Route::middleware('permission:settings.update')->group(function () {

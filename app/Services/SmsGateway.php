@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\SmsLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -23,6 +24,28 @@ class SmsGateway
      * @return array{success: bool, message: string}
      */
     public static function send(string $number, string $message): array
+    {
+        $result = self::attempt($number, $message);
+
+        try {
+            SmsLog::create([
+                'to_number' => $number,
+                'message' => $message,
+                'status' => $result['success'] ? 'sent' : 'failed',
+                'response_message' => $result['message'],
+            ]);
+        } catch (Throwable) {
+            // Never let logging break an SMS that already sent (or a
+            // legitimate failure from being reported back to the caller).
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array{success: bool, message: string}
+     */
+    private static function attempt(string $number, string $message): array
     {
         if (! setting('sms_enabled')) {
             return ['success' => false, 'message' => 'SMS Gateway is disabled.'];
