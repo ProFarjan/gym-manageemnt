@@ -2,13 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\MailLog;
 use App\Models\Member;
 use App\Models\User;
 use App\Notifications\Channels\SmsChannel;
 use App\Observers\MemberObserver;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -58,6 +61,26 @@ class AppServiceProvider extends ServiceProvider
         // the ZKTeco Windows Service calls this on its own sync cycle
         // (default every 5 min), so this is generous headroom, not a real limit.
         RateLimiter::for('api', fn ($request) => Limit::perMinute(120)->by($request->ip()));
+
+        // Logs every email the app actually sends (Settings > Email > Mail
+        // Log table), regardless of which notification/mailable triggered
+        // it — fires for any mailer (log/smtp/etc), not just SMTP.
+        Event::listen(MessageSent::class, function (MessageSent $event) {
+            try {
+                $to = collect($event->message->getTo())
+                    ->map(fn ($address) => $address->getAddress())
+                    ->implode(', ');
+
+                MailLog::create([
+                    'to_address' => $to !== '' ? $to : 'unknown',
+                    'subject' => $event->message->getSubject(),
+                    'mailer' => config('mail.default'),
+                    'status' => 'sent',
+                ]);
+            } catch (\Throwable) {
+                // Never let logging break an email that already sent.
+            }
+        });
     }
 
     /**
@@ -78,10 +101,21 @@ class AppServiceProvider extends ServiceProvider
 
         if ($host = setting('mail_host')) {
             config([
+                // Configuring the smtp mailer's own params was never enough
+                // on its own — mail.default stayed 'log' regardless, so
+                // every notification silently went to the log file instead
+                // of actually sending, however this was filled in.
+                'mail.default' => 'smtp',
                 'mail.mailers.smtp.host' => $host,
                 'mail.mailers.smtp.port' => setting('mail_port', 587),
                 'mail.mailers.smtp.username' => setting('mail_username'),
                 'mail.mailers.smtp.password' => setting('mail_password'),
+                // Port 465 (Gmail's SSL port, among others) needs *implicit*
+                // TLS requested explicitly via scheme=smtps — Symfony Mailer
+                // doesn't infer this from the port number alone. Port 587
+                // (STARTTLS) needs no scheme override; it negotiates
+                // encryption automatically once connected.
+                'mail.mailers.smtp.scheme' => setting('mail_encryption') === 'ssl' ? 'smtps' : null,
             ]);
         }
 

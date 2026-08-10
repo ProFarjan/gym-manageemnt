@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MailLog;
 use App\Models\Setting;
 use App\Models\ZKTecoCommand;
 use App\Services\SmsGateway;
@@ -63,7 +64,7 @@ class SettingController extends Controller
         'business' => ['business_name', 'business_tagline', 'business_address', 'business_phone'],
         'membership' => ['membership_prefix', 'gym_closing_time'],
         'sms' => [],
-        'email' => ['mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name'],
+        'email' => ['mail_host', 'mail_port', 'mail_encryption', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name'],
         'bkash' => ['bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password'],
         'nagad' => ['nagad_merchant_id', 'nagad_merchant_key'],
         'zkteco' => ['zkteco_mode', 'zkteco_ip', 'zkteco_port', 'zkteco_device_id'],
@@ -88,6 +89,12 @@ class SettingController extends Controller
         $settings = Setting::cached();
         $meta = self::SECTIONS[$section];
 
+        if ($section === 'email') {
+            $mailLogs = MailLog::latest('id')->paginate(10);
+
+            return view('admin.settings.email', compact('settings', 'section', 'meta', 'mailLogs'));
+        }
+
         return view("admin.settings.{$section}", compact('settings', 'section', 'meta'));
     }
 
@@ -101,6 +108,7 @@ class SettingController extends Controller
         if ($section === 'email') {
             $request->validate([
                 'mail_port' => ['nullable', 'integer'],
+                'mail_encryption' => ['nullable', 'in:,tls,ssl'],
                 'mail_test_email' => ['nullable', 'email'],
             ]);
         }
@@ -149,6 +157,7 @@ class SettingController extends Controller
                 'mail.mailers.smtp.port' => setting('mail_port', 587),
                 'mail.mailers.smtp.username' => setting('mail_username'),
                 'mail.mailers.smtp.password' => setting('mail_password'),
+                'mail.mailers.smtp.scheme' => setting('mail_encryption') === 'ssl' ? 'smtps' : null,
                 'mail.from.address' => setting('mail_from_address', 'hello@example.com'),
                 'mail.from.name' => setting('mail_from_name', config('app.name')),
             ]);
@@ -161,6 +170,16 @@ class SettingController extends Controller
                 $status .= " Test email sent to {$testAddress}.";
             } catch (\Throwable $e) {
                 $status .= " Test email failed: {$e->getMessage()}";
+
+                // The MessageSent event (which logs successful sends
+                // automatically) never fires on failure, so log it here.
+                MailLog::create([
+                    'to_address' => $testAddress,
+                    'subject' => 'SMTP Test — Connection Successful',
+                    'mailer' => 'smtp',
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                ]);
             }
         }
 
@@ -263,5 +282,25 @@ class SettingController extends Controller
         ]);
 
         return response()->json(['command' => $command]);
+    }
+
+    /**
+     * AJAX: search/paginate the Mail Log table on Settings > Email.
+     */
+    public function emailMailLogs(Request $request)
+    {
+        $mailLogs = MailLog::query()
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->string('search');
+                $q->where(function ($q) use ($search) {
+                    $q->where('to_address', 'like', "%{$search}%")
+                        ->orWhere('subject', 'like', "%{$search}%");
+                });
+            })
+            ->latest('id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.settings.partials._mail-logs-table', compact('mailLogs'));
     }
 }
