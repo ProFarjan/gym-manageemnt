@@ -21,7 +21,26 @@
                 <input type="hidden" name="search" value="1">
 
                 <div class="col-md-6">
-                    <label class="form-label">To Date</label>
+                    <label class="form-label">Plan</label>
+                    <select name="plan_id" class="form-select">
+                        <option value="">All</option>
+                        @foreach ($plans as $plan)
+                            <option value="{{ $plan->id }}" @selected((string) $filters['plan_id'] === (string) $plan->id)>{{ $plan->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All</option>
+                        @foreach (['pending', 'active', 'expired', 'closed'] as $statusOption)
+                            <option value="{{ $statusOption }}" @selected($filters['status'] === $statusOption)>{{ ucfirst($statusOption) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">To Due Date</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
                         <input type="text" name="to" value="{{ $filters['to'] }}" class="form-control report-datepicker"
@@ -29,26 +48,12 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">From Date</label>
+                    <label class="form-label">From Due Date</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
                         <input type="text" name="from" value="{{ $filters['from'] }}" class="form-control report-datepicker"
                                placeholder="Select date" autocomplete="off">
                     </div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Registered By</label>
-                    <select name="registered_by" class="form-select">
-                        <option value="">All</option>
-                        @foreach ($staffUsers as $user)
-                            <option value="{{ $user->id }}" @selected((string) $filters['registered_by'] === (string) $user->id)>{{ $user->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Address</label>
-                    <input type="text" name="address" value="{{ $filters['address'] }}" class="form-control" placeholder="Search by address">
                 </div>
 
                 <div class="col-12 text-end">

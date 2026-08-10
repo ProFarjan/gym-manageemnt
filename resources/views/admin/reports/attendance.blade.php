@@ -38,17 +38,17 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Registered By</label>
-                    <select name="registered_by" class="form-select">
-                        <option value="">All</option>
-                        @foreach ($staffUsers as $user)
-                            <option value="{{ $user->id }}" @selected((string) $filters['registered_by'] === (string) $user->id)>{{ $user->name }}</option>
-                        @endforeach
-                    </select>
+                    <label class="form-label">Member</label>
+                    <input type="text" name="member" value="{{ $filters['member'] }}" class="form-control" placeholder="Search by name or admission ID">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Address</label>
-                    <input type="text" name="address" value="{{ $filters['address'] }}" class="form-control" placeholder="Search by address">
+                    <label class="form-label">Source</label>
+                    <select name="source" class="form-select">
+                        <option value="">All</option>
+                        @foreach (['manual', 'fingerprint', 'rfid'] as $sourceOption)
+                            <option value="{{ $sourceOption }}" @selected($filters['source'] === $sourceOption)>{{ ucfirst($sourceOption) }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="col-12 text-end">

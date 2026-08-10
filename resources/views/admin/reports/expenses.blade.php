@@ -38,17 +38,22 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Registered By</label>
-                    <select name="registered_by" class="form-select">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
                         <option value="">All</option>
-                        @foreach ($staffUsers as $user)
-                            <option value="{{ $user->id }}" @selected((string) $filters['registered_by'] === (string) $user->id)>{{ $user->name }}</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category }}" @selected($filters['category'] === $category)>{{ $category }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Address</label>
-                    <input type="text" name="address" value="{{ $filters['address'] }}" class="form-control" placeholder="Search by address">
+                    <label class="form-label">Account</label>
+                    <select name="payment_account_id" class="form-select">
+                        <option value="">All</option>
+                        @foreach ($accounts as $account)
+                            <option value="{{ $account->id }}" @selected((string) $filters['payment_account_id'] === (string) $account->id)>{{ $account->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="col-12 text-end">
