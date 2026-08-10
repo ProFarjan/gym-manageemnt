@@ -9,6 +9,7 @@
                     <th>Plan</th>
                     <th>Status</th>
                     <th>Due Date</th>
+                    <th>Total Due</th>
                     <th class="text-end">Action</th>
                 </tr>
             </thead>
@@ -42,6 +43,7 @@
                             } }}">{{ ucfirst($member->status) }}</span>
                         </td>
                         <td>{{ $member->due_date?->format('d M Y') ?? '—' }}</td>
+                        <td>{{ number_format($totalDueByMember[$member->id] ?? 0, 2) }}</td>
                         <td class="text-end">
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -81,7 +83,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No members found.</td>
+                        <td colspan="8" class="text-center text-muted py-4">No members found.</td>
                     </tr>
                 @endforelse
             </tbody>

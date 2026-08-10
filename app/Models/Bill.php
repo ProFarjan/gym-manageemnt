@@ -22,6 +22,7 @@ class Bill extends Model
         'due_date',
         'duration_months',
         'duration_applied_at',
+        'is_auto_renewal',
         'notes',
     ];
 
@@ -34,6 +35,7 @@ class Bill extends Model
             'discount_amount' => 'decimal:2',
             'due_date' => 'date',
             'duration_applied_at' => 'datetime',
+            'is_auto_renewal' => 'boolean',
         ];
     }
 

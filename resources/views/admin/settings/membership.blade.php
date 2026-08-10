@@ -4,6 +4,7 @@
 
 @php
     $v = fn($key, $default = null) => old($key, $settings[$key] ?? $default);
+    $autoRenewalEnabled = $v('auto_generate_renewal_bill', '0') === '1';
 @endphp
 
 @section('content')
@@ -72,6 +73,23 @@
                     <label class="form-label">Closure Reminder — Send Time</label>
                     <input type="time" name="closure_reminder_time" value="{{ $v('closure_reminder_time', '09:15') }}" class="form-control">
                 </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Automatic Renewal Billing</div>
+            <div class="card-body">
+                <div class="form-check form-switch">
+                    <input type="checkbox" name="auto_generate_renewal_bill" value="1" id="autoRenewalEnabled" class="form-check-input" @checked($autoRenewalEnabled)>
+                    <label for="autoRenewalEnabled" class="form-check-label fw-semibold">Auto-Generate Renewal Bill on Expiry</label>
+                </div>
+                <p class="text-muted small mb-0 mt-1">
+                    When a member's status flips to Expired, a new bill is generated automatically — always for
+                    exactly one month at a time, priced at Plan Price &divide; Duration (Months), regardless of how
+                    many months the member's plan spans. If the member later gets permanently Closed (3 months
+                    unpaid) without paying it, that unpaid bill is removed automatically. Disabled by default —
+                    renewal bills stay manual (Bills &gt; Create Bill) until this is turned on.
+                </p>
             </div>
         </div>
 

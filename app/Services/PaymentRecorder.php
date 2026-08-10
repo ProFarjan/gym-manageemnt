@@ -93,6 +93,18 @@ class PaymentRecorder
         if (! $memberJustActivated) {
             $member = $bill->member;
             $member->due_date = MembershipCycle::extendByMonths($member->due_date ?? now(), $bill->duration_months);
+
+            // Paying off a duration-bearing bill (e.g. an auto-generated
+            // renewal bill) while Expired is exactly what "renewing" means —
+            // without this, due_date would correctly move into the future
+            // but status would stay stuck on "expired" forever (nothing else
+            // ever flips it back), leaving the member wrongly shown as
+            // expired, still getting closure-countdown reminders, and still
+            // locked out at the ZKTeco device.
+            if ($member->status === 'expired' && $member->due_date->isFuture()) {
+                $member->status = 'active';
+            }
+
             $member->save();
         }
 

@@ -9,6 +9,7 @@ use App\Models\MembershipPlan;
 use App\Models\ZKTecoSyncLog;
 use App\Notifications\RegistrationConfirmation;
 use App\Services\BillNumberGenerator;
+use App\Services\RenewalBillGenerator;
 
 class MemberObserver
 {
@@ -46,6 +47,14 @@ class MemberObserver
                 $current === 'closed' => $this->queueSync($member, 'delete_user'),
                 default => null,
             };
+
+            if ($current === 'expired') {
+                RenewalBillGenerator::generateFor($member);
+            }
+
+            if ($current === 'closed') {
+                RenewalBillGenerator::removeUnpaidFor($member);
+            }
 
             return;
         }

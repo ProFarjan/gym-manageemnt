@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMemberRequest;
 use App\Http\Requests\Admin\UpdateMemberRequest;
+use App\Models\Bill;
 use App\Models\Member;
 use App\Models\MembershipPlan;
 use App\Models\PaymentAccount;
@@ -39,11 +40,21 @@ class MemberController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        // Total Due = sum of balanceDue() across every bill a member has —
+        // computed once here for whichever members are on this page, rather
+        // than per-row in the view, to avoid an N+1 query per member.
+        $memberIds = collect($members->items())->pluck('id');
+        $totalDueByMember = Bill::whereIn('member_id', $memberIds)
+            ->with('payments')
+            ->get()
+            ->groupBy('member_id')
+            ->map(fn ($bills) => $bills->sum(fn (Bill $bill) => $bill->balanceDue()));
+
         if ($request->ajax()) {
-            return view('admin.members.partials._members-table', compact('members', 'perPage'));
+            return view('admin.members.partials._members-table', compact('members', 'perPage', 'totalDueByMember'));
         }
 
-        return view('admin.members.index', compact('members', 'perPage'));
+        return view('admin.members.index', compact('members', 'perPage', 'totalDueByMember'));
     }
 
     /**

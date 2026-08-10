@@ -87,6 +87,7 @@ class SettingController extends Controller
     ];
 
     private const SECTION_CHECKBOX_KEYS = [
+        'membership' => ['auto_generate_renewal_bill'],
         'sms' => ['sms_enabled'],
         'bkash' => ['bkash_sandbox'],
         'nagad' => ['nagad_sandbox'],
