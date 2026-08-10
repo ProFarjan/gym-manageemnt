@@ -208,9 +208,18 @@ class ZKTecoProtocolClient
      */
     private function parseUserRecords(string $records, int $chunkLen): array
     {
+        // 72-byte layout empirically confirmed against the real configured
+        // device (not the documented pyzk/ProFarjan layout, which this
+        // firmware's CMD_USER_TEMP_RRQ response does NOT follow — verified
+        // by capturing the raw buffer, writing a known test record via
+        // setUser(), and reading it back byte-for-byte): 4 reserved +
+        // name(24) + card(4) + privilege(1) + 8 reserved + userid(24) +
+        // uid(2, LE) + 5 reserved = 72. setUser()'s write payload uses a
+        // different layout than this read layout — the device remaps them
+        // internally, confirmed by round-tripping a real test write/read.
         $format = $chunkLen === 28
             ? 'vuid/Cprivilege/a5password/a8name/Vcard/x/Cgroup/vtimezone/Vuserid'
-            : 'vuid/Cprivilege/a8password/a24name/Vcard/x/a7group/x/a24userid';
+            : 'x4/a24name/Vcard/Cprivilege/x8/a24userid/vuid/x5';
 
         $users = [];
         $offset = 0;
