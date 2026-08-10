@@ -63,7 +63,11 @@ class SettingController extends Controller
      */
     private const SECTION_KEYS = [
         'business' => ['business_name', 'business_tagline', 'business_address', 'business_phone'],
-        'membership' => ['membership_prefix', 'gym_closing_time'],
+        'membership' => [
+            'membership_prefix', 'gym_closing_time',
+            'renewal_reminder_days', 'renewal_reminder_time',
+            'closure_reminder_days', 'closure_reminder_time',
+        ],
         'sms' => [],
         'email' => ['mail_host', 'mail_port', 'mail_encryption', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name'],
         'bkash' => ['bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password'],
@@ -121,6 +125,14 @@ class SettingController extends Controller
         }
         if ($section === 'zkteco') {
             $request->validate(['zkteco_mode' => ['nullable', 'in:direct,service']]);
+        }
+        if ($section === 'membership') {
+            $request->validate([
+                'renewal_reminder_days' => ['nullable', 'regex:/^\d+(,\d+)*$/'],
+                'renewal_reminder_time' => ['nullable', 'date_format:H:i'],
+                'closure_reminder_days' => ['nullable', 'regex:/^\d+(,\d+)*$/'],
+                'closure_reminder_time' => ['nullable', 'date_format:H:i'],
+            ]);
         }
         if ($section === 'sms') {
             $request->validate([

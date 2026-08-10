@@ -20,9 +20,7 @@ class SendClosureReminders extends Command
      *
      * @var string
      */
-    protected $description = 'Send 15/10/5/1/Final-day countdown reminders to Expired members before permanent closure';
-
-    private const MILESTONES = [15, 10, 5, 1, 0];
+    protected $description = 'Send countdown reminders to Expired members before permanent closure, on the milestones configured in Settings > Membership';
 
     /**
      * Execute the console command.
@@ -31,13 +29,17 @@ class SendClosureReminders extends Command
     {
         $sent = 0;
 
+        $milestones = collect(explode(',', setting('closure_reminder_days', '15,10,5,1,0')))
+            ->map(fn ($d) => (int) trim($d))
+            ->unique();
+
         $members = Member::where('status', 'expired')->whereNotNull('due_date')->get();
 
         foreach ($members as $member) {
             $closureDate = $member->due_date->copy()->addMonths(3)->startOfDay();
             $daysRemaining = (int) today()->diffInDays($closureDate, false);
 
-            if (in_array($daysRemaining, self::MILESTONES, true)) {
+            if ($milestones->contains($daysRemaining)) {
                 $member->notify(new ClosureReminderNotification($daysRemaining));
                 $sent++;
             }

@@ -20,7 +20,7 @@ class SendRenewalReminders extends Command
      *
      * @var string
      */
-    protected $description = 'Send 3-days-before and due-date renewal reminders to Active members';
+    protected $description = 'Send renewal reminders to Active members, on the day-offsets configured in Settings > Membership';
 
     /**
      * Execute the console command.
@@ -29,7 +29,11 @@ class SendRenewalReminders extends Command
     {
         $sent = 0;
 
-        foreach ([3, 0] as $daysUntilDue) {
+        $days = collect(explode(',', setting('renewal_reminder_days', '3,0')))
+            ->map(fn ($d) => (int) trim($d))
+            ->unique();
+
+        foreach ($days as $daysUntilDue) {
             $members = Member::where('status', 'active')
                 ->whereDate('due_date', today()->addDays($daysUntilDue))
                 ->get();

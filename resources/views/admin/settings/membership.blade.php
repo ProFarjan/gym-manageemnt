@@ -42,6 +42,39 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Renewal &amp; Closure Reminders</div>
+            <div class="card-body row g-3">
+                <div class="col-12">
+                    <p class="text-muted small mb-0">
+                        Reminders are sent by email/SMS to members as their due date approaches, and again on a
+                        countdown after expiry before the membership is permanently closed. Days are counted
+                        relative to the due date (renewal) or the 3-months-after-expiry closure date.
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Renewal Reminder — Days Before Due Date</label>
+                    <input type="text" name="renewal_reminder_days" value="{{ $v('renewal_reminder_days', '3,0') }}" class="form-control" placeholder="3,0">
+                    <div class="form-text">Comma-separated. <code>0</code> means on the due date itself.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Renewal Reminder — Send Time</label>
+                    <input type="time" name="renewal_reminder_time" value="{{ $v('renewal_reminder_time', '09:00') }}" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Closure Reminder — Days Before Closure</label>
+                    <input type="text" name="closure_reminder_days" value="{{ $v('closure_reminder_days', '15,10,5,1,0') }}" class="form-control" placeholder="15,10,5,1,0">
+                    <div class="form-text">Comma-separated. <code>0</code> means the final day before permanent closure.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Closure Reminder — Send Time</label>
+                    <input type="time" name="closure_reminder_time" value="{{ $v('closure_reminder_time', '09:15') }}" class="form-control">
+                </div>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary">Save Settings</button>
     </form>
 @endsection
