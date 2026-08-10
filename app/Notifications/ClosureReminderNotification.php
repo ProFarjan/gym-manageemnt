@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Member;
 use App\Notifications\Concerns\FiltersAvailableChannels;
+use App\Services\SmsTemplateRenderer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -44,6 +45,14 @@ class ClosureReminderNotification extends Notification implements ShouldQueue
 
     public function toSms(Member $notifiable): string
     {
-        return "GirliGirl Gym: Your membership will be permanently closed in ".$this->label().". Renew now to avoid losing your membership.";
+        return SmsTemplateRenderer::render(
+            'sms_template_closure_reminder',
+            '{{business_name}}: Your membership will be permanently closed in {{label}}. Renew now to avoid losing your membership.',
+            [
+                'business_name' => setting('business_name', config('app.name')),
+                'full_name' => $notifiable->full_name,
+                'label' => $this->label(),
+            ]
+        );
     }
 }

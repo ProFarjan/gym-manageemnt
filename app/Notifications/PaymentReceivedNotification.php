@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Member;
 use App\Models\Payment;
 use App\Notifications\Concerns\FiltersAvailableChannels;
+use App\Services\SmsTemplateRenderer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -41,6 +42,16 @@ class PaymentReceivedNotification extends Notification implements ShouldQueue
 
     public function toSms(Member $notifiable): string
     {
-        return "Payment received: ".number_format($this->payment->amount, 2)." BDT. Receipt: {$this->payment->receipt_number}.";
+        return SmsTemplateRenderer::render(
+            'sms_template_payment_received',
+            'Payment received: {{amount}} BDT. Receipt: {{receipt_number}}.',
+            [
+                'business_name' => setting('business_name', config('app.name')),
+                'full_name' => $notifiable->full_name,
+                'amount' => number_format($this->payment->amount, 2),
+                'receipt_number' => $this->payment->receipt_number,
+                'due_date' => $this->payment->period_end?->format('d M Y') ?? '',
+            ]
+        );
     }
 }

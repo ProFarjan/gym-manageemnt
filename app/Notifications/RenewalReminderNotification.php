@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Member;
 use App\Notifications\Concerns\FiltersAvailableChannels;
+use App\Services\SmsTemplateRenderer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -41,6 +42,15 @@ class RenewalReminderNotification extends Notification implements ShouldQueue
     {
         $when = $this->daysUntilDue === 0 ? 'today' : "in {$this->daysUntilDue} day(s)";
 
-        return "GirliGirl Gym: Your membership is due for renewal {$when} ({$notifiable->due_date->format('d M Y')}). Please renew to avoid interruption.";
+        return SmsTemplateRenderer::render(
+            'sms_template_renewal_reminder',
+            '{{business_name}}: Your membership is due for renewal {{when}} ({{due_date}}). Please renew to avoid interruption.',
+            [
+                'business_name' => setting('business_name', config('app.name')),
+                'full_name' => $notifiable->full_name,
+                'when' => $when,
+                'due_date' => $notifiable->due_date->format('d M Y'),
+            ]
+        );
     }
 }

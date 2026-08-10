@@ -34,6 +34,10 @@ class SettingController extends Controller
             'label' => 'SMS Gateway',
             'description' => 'Enable and configure a generic SMS gateway for member notifications.',
         ],
+        'sms_templates' => [
+            'label' => 'SMS Template',
+            'description' => 'Customize the wording of every automatic SMS the app sends to members.',
+        ],
         'email' => [
             'label' => 'Email (SMTP) Settings',
             'description' => 'Outgoing mail server configuration.',
@@ -69,6 +73,12 @@ class SettingController extends Controller
             'closure_reminder_days', 'closure_reminder_time',
         ],
         'sms' => [],
+        'sms_templates' => [
+            'sms_template_registration',
+            'sms_template_payment_received',
+            'sms_template_renewal_reminder',
+            'sms_template_closure_reminder',
+        ],
         'email' => ['mail_host', 'mail_port', 'mail_encryption', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name'],
         'bkash' => ['bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password'],
         'nagad' => ['nagad_merchant_id', 'nagad_merchant_key'],
@@ -125,6 +135,14 @@ class SettingController extends Controller
         }
         if ($section === 'zkteco') {
             $request->validate(['zkteco_mode' => ['nullable', 'in:direct,service']]);
+        }
+        if ($section === 'sms_templates') {
+            $request->validate([
+                'sms_template_registration' => ['nullable', 'string', 'max:500'],
+                'sms_template_payment_received' => ['nullable', 'string', 'max:500'],
+                'sms_template_renewal_reminder' => ['nullable', 'string', 'max:500'],
+                'sms_template_closure_reminder' => ['nullable', 'string', 'max:500'],
+            ]);
         }
         if ($section === 'membership') {
             $request->validate([

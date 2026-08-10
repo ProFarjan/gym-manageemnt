@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Member;
 use App\Notifications\Concerns\FiltersAvailableChannels;
+use App\Services\SmsTemplateRenderer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -32,6 +33,15 @@ class RegistrationConfirmation extends Notification implements ShouldQueue
 
     public function toSms(Member $notifiable): string
     {
-        return "Welcome to GirliGirl Gym! Your Admission ID: {$notifiable->admission_id}. Status: ".ucfirst($notifiable->status);
+        return SmsTemplateRenderer::render(
+            'sms_template_registration',
+            'Welcome to {{business_name}}! Your Admission ID: {{admission_id}}. Status: {{status}}',
+            [
+                'business_name' => setting('business_name', config('app.name')),
+                'full_name' => $notifiable->full_name,
+                'admission_id' => $notifiable->admission_id,
+                'status' => ucfirst($notifiable->status),
+            ]
+        );
     }
 }
