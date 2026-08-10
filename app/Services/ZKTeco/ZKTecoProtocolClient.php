@@ -46,6 +46,8 @@ class ZKTecoProtocolClient
 
     private const CMD_READ_BUFFER = 1504;
 
+    private const CMD_SET_USER = 8;
+
     private const CMD_DELETE_USER = 18;
 
     private const CMD_USERTEMP_RRQ = 9;
@@ -249,6 +251,35 @@ class ZKTecoProtocolClient
     public function deleteUser(int $uid): bool
     {
         $response = $this->sendAndReceive(self::CMD_DELETE_USER, pack('v', $uid));
+
+        return $response['status'];
+    }
+
+    /**
+     * Create or overwrite a single user on the device (CMD_SET_USER — the
+     * same command handles both create and update, since it just writes
+     * the given uid's record). Byte layout matches the proven
+     * https://github.com/ProFarjan/ZKTeco-Windows-Service ZkUser::set():
+     * uid(2) + role(1) + password(8) + name(24) + card(4) + reserved(9,
+     * first byte fixed 0x01) + user_id(9) + reserved(15) = 72 bytes.
+     */
+    public function setUser(int $uid, string $userId, string $name, string $password = '', int $role = 0, int $cardNo = 0): bool
+    {
+        if ($uid <= 0 || $uid > 0xFFFF || strlen($userId) > 9 || strlen($name) > 24 || strlen($password) > 8) {
+            throw new RuntimeException('Invalid user data for the device (uid/userId/name/password out of range).');
+        }
+
+        $commandString =
+            pack('v', $uid).
+            pack('C', $role).
+            str_pad(substr($password, 0, 8), 8, "\0").
+            str_pad(substr($name, 0, 24), 24, "\0").
+            str_pad(pack('V', $cardNo), 4, "\0").
+            str_pad("\x01", 9, "\0").
+            str_pad(substr($userId, 0, 9), 9, "\0").
+            str_repeat("\0", 15);
+
+        $response = $this->sendAndReceive(self::CMD_SET_USER, $commandString);
 
         return $response['status'];
     }

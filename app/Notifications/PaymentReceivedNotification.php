@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Member;
 use App\Models\Payment;
+use App\Notifications\Concerns\FiltersAvailableChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,7 +12,7 @@ use Illuminate\Notifications\Notification;
 
 class PaymentReceivedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use FiltersAvailableChannels, Queueable;
 
     public function __construct(public Payment $payment)
     {
@@ -19,7 +20,7 @@ class PaymentReceivedNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'sms'];
+        return $this->availableChannels($notifiable, ['mail', 'sms']);
     }
 
     public function toMail(Member $notifiable): MailMessage

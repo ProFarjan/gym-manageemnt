@@ -4,66 +4,140 @@ namespace App\Services\ZKTeco;
 
 use App\Models\Member;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 /**
- * ZKTeco device client. createUser/updateUser/disableUser/deleteUser(Member)
- * and pullAttendanceLogs() below are still stubs (no physical device is
- * reachable in this development environment, so they simulate success and
- * log what a real call would send). listUsers()/deleteUserById() are real —
- * they speak the actual ZKTeco TCP protocol via ZKTecoProtocolClient. IP/
- * port/device ID are configurable in Admin > Settings and read here via
- * setting().
+ * ZKTeco device client. Every method here speaks the actual ZKTeco TCP
+ * protocol via ZKTecoProtocolClient — none of this is simulated. IP/port/
+ * device ID are configurable in Admin > Settings and read here via
+ * setting(). createUser/updateUser/disableUser/deleteUser(Member) throw a
+ * RuntimeException on any failure (no IP configured, connect failed, device
+ * rejected the write) rather than returning false, so a queued
+ * SyncMemberToZKTeco job correctly retries and lands in ZKTecoSyncLog as
+ * 'failed' instead of being force-marked 'success' just because no
+ * exception happened to be thrown.
+ *
+ * The device's numeric uid (its internal record slot, 1-65535) is the
+ * Member's own primary key — small, unique, and guaranteed to fit. The
+ * device's 9-char user_id string is the Member's admission_id, which is
+ * what gets stored back onto Member.zkteco_user_id once a create/update
+ * succeeds.
  */
 class ZKTecoDeviceClient
 {
     public function createUser(Member $member): bool
     {
-        $this->log('createUser', $member);
-
-        return true;
+        return $this->pushUser($member);
     }
 
     public function updateUser(Member $member): bool
     {
-        $this->log('updateUser', $member);
-
-        return true;
+        return $this->pushUser($member);
     }
 
+    /**
+     * The base ZKTeco protocol has no per-user "soft disable" flag — the
+     * closest real effect is removing the user's device record so they can
+     * no longer clock in/out. zkteco_user_id is deliberately left as-is (see
+     * deleteUser(), which clears it) so re-activating the member just
+     * recreates the same record via pushUser().
+     */
     public function disableUser(Member $member): bool
     {
-        $this->log('disableUser', $member);
-
-        return true;
+        return $this->removeFromDevice($member);
     }
 
     public function deleteUser(Member $member): bool
     {
-        $this->log('deleteUser', $member);
+        $removed = $this->removeFromDevice($member);
 
-        return true;
+        if ($removed && $member->zkteco_user_id !== null) {
+            $member->forceFill(['zkteco_user_id' => null])->save();
+        }
+
+        return $removed;
+    }
+
+    private function pushUser(Member $member): bool
+    {
+        $ip = setting('zkteco_ip');
+        $port = (int) setting('zkteco_port', 4370);
+
+        if (! $ip) {
+            throw new RuntimeException('Set the Device IP in ZKTeco Settings first.');
+        }
+
+        $client = new ZKTecoProtocolClient;
+        $connect = $client->connect($ip, $port);
+
+        if (! $connect['success']) {
+            throw new RuntimeException($connect['message']);
+        }
+
+        try {
+            $userId = $member->admission_id;
+            $created = $client->setUser($member->id, $userId, $member->full_name);
+
+            if (! $created) {
+                throw new RuntimeException('Device rejected the create/update request.');
+            }
+
+            if ($member->zkteco_user_id !== $userId) {
+                $member->forceFill(['zkteco_user_id' => $userId])->save();
+            }
+
+            Log::info("[ZKTeco] pushed user{$this->deviceSuffix()}: uid={$member->id} user_id={$userId} name={$member->full_name}");
+
+            return true;
+        } finally {
+            $client->disconnect();
+        }
+    }
+
+    private function removeFromDevice(Member $member): bool
+    {
+        $ip = setting('zkteco_ip');
+        $port = (int) setting('zkteco_port', 4370);
+
+        if (! $ip) {
+            throw new RuntimeException('Set the Device IP in ZKTeco Settings first.');
+        }
+
+        $client = new ZKTecoProtocolClient;
+        $connect = $client->connect($ip, $port);
+
+        if (! $connect['success']) {
+            throw new RuntimeException($connect['message']);
+        }
+
+        try {
+            $removed = $client->deleteUser($member->id);
+
+            Log::info("[ZKTeco] removed user{$this->deviceSuffix()}: uid={$member->id} success=".($removed ? '1' : '0'));
+
+            return $removed;
+        } finally {
+            $client->disconnect();
+        }
     }
 
     /**
-     * Pull fresh attendance logs from the device. Returns an empty set in
-     * stub mode — a real implementation would poll the device (or receive a
-     * push) for fingerprint/RFID punches since the last sync.
+     * Pull fresh attendance logs from the device. Not yet implemented for
+     * Direct IP mode (always returns empty) — in Local Service mode, the
+     * Windows service pushes attendance logs directly via the API instead
+     * of this method being called.
      *
      * @return array<int, array{member_id: int, check_in: string, zkteco_log_id: string}>
      */
     public function pullAttendanceLogs(): array
     {
-        Log::info("[ZKTeco stub{$this->deviceSuffix()}] pullAttendanceLogs called — no device configured, returning no records.");
-
         return [];
     }
 
     /**
-     * Raw TCP reachability check against the device's IP/port — genuinely
-     * opens a socket rather than simulating success like the rest of this
-     * stub client. This only proves something is listening on that host and
-     * port, not that it speaks the ZKTeco protocol or that the Device ID is
-     * correct, since no real protocol handshake is implemented here yet.
+     * Raw TCP reachability check against the device's IP/port. This only
+     * proves something is listening on that host and port, not that it
+     * speaks the ZKTeco protocol or that the Device ID is correct.
      *
      * @return array{success: bool, message: string}
      */
@@ -157,11 +231,6 @@ class ZKTecoDeviceClient
         } finally {
             $client->disconnect();
         }
-    }
-
-    private function log(string $action, Member $member): void
-    {
-        Log::info("[ZKTeco stub{$this->deviceSuffix()}] {$action} for member {$member->admission_id} ({$member->full_name})");
     }
 
     private function deviceSuffix(): string
