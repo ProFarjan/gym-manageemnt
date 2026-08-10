@@ -10,6 +10,13 @@ window.Bootstrap = Bootstrap;
 window.Chart = Chart;
 window.AOS = AOS;
 
+// Applies to every dropdown app-wide, including ones inside AJAX-refreshed
+// table rows that Bootstrap's own data-api auto-initializes with no JS on
+// our end — 'fixed' positioning escapes .table-responsive's overflow:auto,
+// which otherwise clips (or visually buries under following rows) any
+// dropdown menu opened near the bottom of a scrollable table.
+Bootstrap.Dropdown.Default.popperConfig = { strategy: 'fixed' };
+
 document.addEventListener('DOMContentLoaded', () => {
     AOS.init({ duration: 700, once: true, offset: 80 });
 
@@ -104,35 +111,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.querySelectorAll('.table-responsive .dropdown-toggle').forEach((toggleEl) => {
-        new window.Bootstrap.Dropdown(toggleEl, {
-            popperConfig: { strategy: 'fixed' },
-        });
-    });
-
+    // Member rows are re-rendered wholesale by the .ajax-panel search/filter
+    // (see loadAjaxPanel below), so a direct querySelectorAll().forEach()
+    // binding here would only ever reach the rows present at page load —
+    // Action dropdown links (and the delete trigger below) in any
+    // AJAX-refreshed row would silently do nothing. Delegated listeners on
+    // `document` keep working no matter how the row DOM was produced.
     const memberActionModalEl = document.getElementById('memberActionModal');
     if (memberActionModalEl) {
         const memberActionModal = new window.Bootstrap.Modal(memberActionModalEl);
         const modalTitle = document.getElementById('memberActionModalLabel');
         const modalBody = document.getElementById('memberActionModalBody');
 
-        document.querySelectorAll('[data-modal-url]').forEach((link) => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                modalTitle.textContent = link.dataset.modalTitle || '';
-                modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
-                memberActionModal.show();
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-modal-url]');
+            if (!link) return;
+            e.preventDefault();
 
-                fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                    .then((response) => {
-                        if (!response.ok) throw new Error('Request failed');
-                        return response.text();
-                    })
-                    .then((html) => { modalBody.innerHTML = html; })
-                    .catch(() => {
-                        modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
-                    });
-            });
+            modalTitle.textContent = link.dataset.modalTitle || '';
+            modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
+            memberActionModal.show();
+
+            fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then((response) => {
+                    if (!response.ok) throw new Error('Request failed');
+                    return response.text();
+                })
+                .then((html) => { modalBody.innerHTML = html; })
+                .catch(() => {
+                    modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
+                });
         });
     }
 
@@ -142,13 +150,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteForm = document.getElementById('memberDeleteForm');
         const deleteName = document.getElementById('memberDeleteName');
 
-        document.querySelectorAll('[data-delete-url]').forEach((link) => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                deleteForm.action = link.dataset.deleteUrl;
-                deleteName.textContent = link.dataset.deleteName || 'this member';
-                memberDeleteModal.show();
-            });
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-delete-url]');
+            if (!link) return;
+            e.preventDefault();
+
+            deleteForm.action = link.dataset.deleteUrl;
+            deleteName.textContent = link.dataset.deleteName || 'this member';
+            memberDeleteModal.show();
         });
     }
 
@@ -161,30 +170,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         printBtn?.addEventListener('click', () => window.print());
 
-        document.querySelectorAll('[data-modal-url]').forEach((link) => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                modalTitle.textContent = link.dataset.modalTitle || '';
-                modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
-                printBtn?.classList.add('d-none');
-                billActionModal.show();
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-modal-url]');
+            if (!link) return;
+            e.preventDefault();
 
-                fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                    .then((response) => {
-                        if (!response.ok) throw new Error('Request failed');
-                        return response.text();
-                    })
-                    .then((html) => {
-                        modalBody.innerHTML = html;
-                        modalBody.querySelectorAll('.invoice-date-picker').forEach(attachDatepicker);
-                        // Only the View panel is printable — its markup always
-                        // includes the letterhead header built for print.
-                        printBtn?.classList.toggle('d-none', !modalBody.querySelector('.bill-print-header'));
-                    })
-                    .catch(() => {
-                        modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
-                    });
-            });
+            modalTitle.textContent = link.dataset.modalTitle || '';
+            modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
+            printBtn?.classList.add('d-none');
+            billActionModal.show();
+
+            fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then((response) => {
+                    if (!response.ok) throw new Error('Request failed');
+                    return response.text();
+                })
+                .then((html) => {
+                    modalBody.innerHTML = html;
+                    modalBody.querySelectorAll('.invoice-date-picker').forEach(attachDatepicker);
+                    // Only the View panel is printable — its markup always
+                    // includes the letterhead header built for print.
+                    printBtn?.classList.toggle('d-none', !modalBody.querySelector('.bill-print-header'));
+                })
+                .catch(() => {
+                    modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
+                });
         });
     }
 
@@ -290,13 +300,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteForm = document.getElementById('billDeleteForm');
         const deleteName = document.getElementById('billDeleteName');
 
-        document.querySelectorAll('[data-delete-url]').forEach((link) => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                deleteForm.action = link.dataset.deleteUrl;
-                deleteName.textContent = link.dataset.deleteName || 'this bill';
-                billDeleteModal.show();
-            });
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-delete-url]');
+            if (!link) return;
+            e.preventDefault();
+
+            deleteForm.action = link.dataset.deleteUrl;
+            deleteName.textContent = link.dataset.deleteName || 'this bill';
+            billDeleteModal.show();
         });
     }
 

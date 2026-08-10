@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\ZKTecoCommand;
 use App\Services\SmsGateway;
+use App\Services\ZKTeco\ZKTecoDeviceClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SettingController extends Controller
 {
@@ -62,7 +66,7 @@ class SettingController extends Controller
         'email' => ['mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name'],
         'bkash' => ['bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password'],
         'nagad' => ['nagad_merchant_id', 'nagad_merchant_key'],
-        'zkteco' => ['zkteco_ip', 'zkteco_port', 'zkteco_device_id'],
+        'zkteco' => ['zkteco_mode', 'zkteco_ip', 'zkteco_port', 'zkteco_device_id'],
         'invoice' => ['invoice_footer'],
     ];
 
@@ -95,7 +99,13 @@ class SettingController extends Controller
             $request->validate(['logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,svg', 'max:1024']]);
         }
         if ($section === 'email') {
-            $request->validate(['mail_port' => ['nullable', 'integer']]);
+            $request->validate([
+                'mail_port' => ['nullable', 'integer'],
+                'mail_test_email' => ['nullable', 'email'],
+            ]);
+        }
+        if ($section === 'zkteco') {
+            $request->validate(['zkteco_mode' => ['nullable', 'in:direct,service']]);
         }
         if ($section === 'sms') {
             $request->validate([
@@ -127,6 +137,33 @@ class SettingController extends Controller
 
         $status = self::SECTIONS[$section]['label'].' updated.';
 
+        if ($section === 'email' && $request->filled('mail_test_email')) {
+            $testAddress = $request->input('mail_test_email');
+
+            // Re-apply the just-saved settings so this test actually
+            // exercises them, not whatever the mailer was still configured
+            // with from before this save (see AppServiceProvider).
+            config([
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.host' => setting('mail_host'),
+                'mail.mailers.smtp.port' => setting('mail_port', 587),
+                'mail.mailers.smtp.username' => setting('mail_username'),
+                'mail.mailers.smtp.password' => setting('mail_password'),
+                'mail.from.address' => setting('mail_from_address', 'hello@example.com'),
+                'mail.from.name' => setting('mail_from_name', config('app.name')),
+            ]);
+
+            try {
+                Mail::raw(
+                    'This is a test email from '.setting('business_name', config('app.name')).'. Your SMTP settings are working correctly.',
+                    fn ($message) => $message->to($testAddress)->subject('SMTP Test — Connection Successful')
+                );
+                $status .= " Test email sent to {$testAddress}.";
+            } catch (\Throwable $e) {
+                $status .= " Test email failed: {$e->getMessage()}";
+            }
+        }
+
         if ($section === 'sms') {
             $pairs = collect($request->input('gateway_key', []))
                 ->map(fn ($key, $i) => ['key' => trim($key ?? ''), 'value' => trim($request->input('gateway_value')[$i] ?? '')])
@@ -146,5 +183,85 @@ class SettingController extends Controller
         }
 
         return redirect()->route('admin.settings.edit', $section)->with('status', $status);
+    }
+
+    /**
+     * AJAX: test the ZKTeco device connection using whatever IP/port is
+     * currently typed into the form, before the admin saves anything.
+     */
+    public function testZktecoConnection(Request $request, ZKTecoDeviceClient $client)
+    {
+        $data = $request->validate([
+            'zkteco_ip' => ['nullable', 'string', 'max:255'],
+            'zkteco_port' => ['nullable', 'integer', 'min:1', 'max:65535'],
+        ]);
+
+        $result = $client->testConnection(trim($data['zkteco_ip'] ?? ''), (int) ($data['zkteco_port'] ?? 4370));
+
+        return response()->json($result);
+    }
+
+    /**
+     * AJAX: list every user currently enrolled on the device, using the
+     * saved zkteco_ip/zkteco_port settings.
+     */
+    public function zktecoUsers(ZKTecoDeviceClient $client)
+    {
+        return response()->json($client->listUsers());
+    }
+
+    /**
+     * AJAX: delete a single user directly on the device by its ZKTeco uid.
+     */
+    public function zktecoDeleteUser(int $uid, ZKTecoDeviceClient $client)
+    {
+        return response()->json($client->deleteUserById($uid));
+    }
+
+    /**
+     * AJAX: generate a fresh shared key for the ZKTeco Windows Service
+     * ("Local Service" mode) to authenticate with, replacing any existing
+     * key immediately (an old config.json still holding the previous key
+     * will start getting 401s until updated).
+     */
+    public function regenerateZktecoApiKey()
+    {
+        $key = Str::random(48);
+
+        Setting::updateOrCreate(['key' => 'zkteco_api_key'], ['value' => $key]);
+
+        return response()->json(['api_key' => $key]);
+    }
+
+    /**
+     * AJAX: recent device-management commands queued for "Local Service"
+     * mode, newest first — the Windows service picks these up next time it
+     * calls the /api/zkteco/sync endpoint.
+     */
+    public function zktecoCommandsIndex()
+    {
+        $commands = ZKTecoCommand::latest('id')->limit(20)->get();
+
+        return response()->json(['commands' => $commands]);
+    }
+
+    /**
+     * AJAX: queue a new device-management command for "Local Service" mode.
+     */
+    public function zktecoCommandsStore(Request $request)
+    {
+        $data = $request->validate([
+            'type' => ['required', 'in:create_user,update_user,delete_user,list_users'],
+            'payload' => ['nullable', 'array'],
+        ]);
+
+        $command = ZKTecoCommand::create([
+            'type' => $data['type'],
+            'payload' => $data['payload'] ?? [],
+            'status' => 'pending',
+            'created_by' => $request->user()->id,
+        ]);
+
+        return response()->json(['command' => $command]);
     }
 }

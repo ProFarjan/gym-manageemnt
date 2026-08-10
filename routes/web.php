@@ -272,10 +272,16 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     // Settings
     Route::middleware('permission:settings.view')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::get('/settings/zkteco/users', [SettingController::class, 'zktecoUsers'])->name('settings.zkteco.users');
+        Route::get('/settings/zkteco/commands', [SettingController::class, 'zktecoCommandsIndex'])->name('settings.zkteco.commands.index');
         Route::get('/settings/{section}', [SettingController::class, 'edit'])->name('settings.edit');
     });
     Route::middleware('permission:settings.update')->group(function () {
         Route::put('/settings/{section}', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/zkteco/test-connection', [SettingController::class, 'testZktecoConnection'])->name('settings.zkteco.test-connection');
+        Route::delete('/settings/zkteco/users/{uid}', [SettingController::class, 'zktecoDeleteUser'])->name('settings.zkteco.users.destroy');
+        Route::post('/settings/zkteco/regenerate-api-key', [SettingController::class, 'regenerateZktecoApiKey'])->name('settings.zkteco.regenerate-api-key');
+        Route::post('/settings/zkteco/commands', [SettingController::class, 'zktecoCommandsStore'])->name('settings.zkteco.commands.store');
     });
 
     // Gallery

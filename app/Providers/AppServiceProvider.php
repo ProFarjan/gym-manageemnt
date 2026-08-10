@@ -7,9 +7,11 @@ use App\Models\User;
 use App\Notifications\Channels\SmsChannel;
 use App\Observers\MemberObserver;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -51,6 +53,11 @@ class AppServiceProvider extends ServiceProvider
             : route('admin.dashboard'));
 
         $this->applySettingsOverrides();
+
+        // Required by the default 'api' middleware group (routes/api.php) —
+        // the ZKTeco Windows Service calls this on its own sync cycle
+        // (default every 5 min), so this is generous headroom, not a real limit.
+        RateLimiter::for('api', fn ($request) => Limit::perMinute(120)->by($request->ip()));
     }
 
     /**
