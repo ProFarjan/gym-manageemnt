@@ -33,7 +33,15 @@ class SendClosureReminders extends Command
             ->map(fn ($d) => (int) trim($d))
             ->unique();
 
-        $members = Member::where('status', 'expired')->whereNotNull('due_date')->get();
+        // Includes 'closed', not just 'expired': app:sync-membership-statuses
+        // runs earlier in the day (00:30) and already flips a member to
+        // 'closed' once its closure date arrives, so on that exact day the
+        // member is closed by the time this command runs — excluding
+        // 'closed' here would silently swallow the "0 days / Final Day"
+        // milestone every time. This is safe: for a member closed on any
+        // earlier day, $daysRemaining is already negative and will never
+        // match a (non-negative) configured milestone again.
+        $members = Member::whereIn('status', ['expired', 'closed'])->whereNotNull('due_date')->get();
 
         foreach ($members as $member) {
             $closureDate = $member->due_date->copy()->addMonths(3)->startOfDay();
