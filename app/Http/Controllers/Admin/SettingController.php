@@ -58,6 +58,10 @@ class SettingController extends Controller
             'label' => 'Invoice Footer',
             'description' => 'Footer note printed on bills and payment receipts.',
         ],
+        'locker' => [
+            'label' => 'Locker Settings',
+            'description' => 'Fixed monthly locker rental price.',
+        ],
     ];
 
     /**
@@ -84,6 +88,7 @@ class SettingController extends Controller
         'nagad' => ['nagad_merchant_id', 'nagad_merchant_key'],
         'zkteco' => ['zkteco_mode', 'zkteco_ip', 'zkteco_port', 'zkteco_device_id'],
         'invoice' => ['invoice_footer'],
+        'locker' => ['locker_monthly_price'],
     ];
 
     private const SECTION_CHECKBOX_KEYS = [
@@ -152,6 +157,9 @@ class SettingController extends Controller
                 'closure_reminder_days' => ['nullable', 'regex:/^\d+(,\d+)*$/'],
                 'closure_reminder_time' => ['nullable', 'date_format:H:i'],
             ]);
+        }
+        if ($section === 'locker') {
+            $request->validate(['locker_monthly_price' => ['nullable', 'numeric', 'min:0']]);
         }
         if ($section === 'sms') {
             $request->validate([

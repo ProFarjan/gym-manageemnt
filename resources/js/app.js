@@ -312,6 +312,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Lockers page: same [data-modal-url]/[data-delete-url] delegated
+    // pattern as Bills above, just its own modal pair scoped to this page.
+    const lockerActionModalEl = document.getElementById('lockerActionModal');
+    if (lockerActionModalEl) {
+        const lockerActionModal = new window.Bootstrap.Modal(lockerActionModalEl);
+        const modalTitle = document.getElementById('lockerActionModalLabel');
+        const modalBody = document.getElementById('lockerActionModalBody');
+
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-modal-url]');
+            if (!link) return;
+            e.preventDefault();
+
+            modalTitle.textContent = link.dataset.modalTitle || '';
+            modalBody.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
+            lockerActionModal.show();
+
+            fetch(link.dataset.modalUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then((response) => {
+                    if (!response.ok) throw new Error('Request failed');
+                    return response.text();
+                })
+                .then((html) => { modalBody.innerHTML = html; })
+                .catch(() => {
+                    modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load. Please try again.</div>';
+                });
+        });
+    }
+
+    const lockerDeleteModalEl = document.getElementById('lockerDeleteModal');
+    if (lockerDeleteModalEl) {
+        const lockerDeleteModal = new window.Bootstrap.Modal(lockerDeleteModalEl);
+        const deleteForm = document.getElementById('lockerDeleteForm');
+        const deleteName = document.getElementById('lockerDeleteName');
+
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-delete-url]');
+            if (!link) return;
+            e.preventDefault();
+
+            deleteForm.action = link.dataset.deleteUrl;
+            deleteName.textContent = link.dataset.deleteName || 'this locker';
+            lockerDeleteModal.show();
+        });
+    }
+
     // Bill Pay form is injected into the modal via fetch(), so it doesn't exist
     // yet at DOMContentLoaded — listen via delegation instead of a direct binding.
     // A discount here counts *toward* settling the bill rather than against it,
@@ -333,6 +379,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const exceeds = settled > balanceDue + 0.01;
         totalEl.classList.toggle('text-danger', exceeds);
         warningEl?.classList.toggle('d-none', !exceeds);
+    });
+
+    // Locker "Generate Rent Bill" form: live months × rate preview. Same
+    // delegation reason as the Bill Pay form above — injected via fetch.
+    document.addEventListener('input', (e) => {
+        if (e.target.id !== 'lockerBillMonths') return;
+
+        const totalEl = e.target.closest('form')?.querySelector('#lockerBillTotal');
+        if (!totalEl) return;
+
+        const rate = parseFloat(e.target.dataset.rate) || 0;
+        const months = parseInt(e.target.value, 10) || 0;
+        totalEl.value = (rate * months).toFixed(2);
     });
 
     // Create Bill form: dynamic line items. Each row's Total is qty × unit

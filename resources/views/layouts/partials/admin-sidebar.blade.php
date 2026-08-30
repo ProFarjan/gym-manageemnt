@@ -35,6 +35,15 @@
                 </li>
             @endcan
 
+            @can('lockers.view')
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.lockers.*') ? 'active' : '' }}"
+                       href="{{ route('admin.lockers.index') }}">
+                        <i class="bi bi-lock"></i><span>Lockers</span>
+                    </a>
+                </li>
+            @endcan
+
             @canany(['membership_plans.view', 'offers.view'])
                 @php $packagesActive = request()->routeIs(['admin.membership-plans.*', 'admin.offers.*']); @endphp
                 <li class="nav-item">

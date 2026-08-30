@@ -23,6 +23,7 @@ class Bill extends Model
         'duration_months',
         'duration_applied_at',
         'is_auto_renewal',
+        'locker_id',
         'notes',
     ];
 
@@ -47,6 +48,11 @@ class Bill extends Model
     public function membershipPlan(): BelongsTo
     {
         return $this->belongsTo(MembershipPlan::class);
+    }
+
+    public function locker(): BelongsTo
+    {
+        return $this->belongsTo(Locker::class);
     }
 
     public function payments(): HasMany

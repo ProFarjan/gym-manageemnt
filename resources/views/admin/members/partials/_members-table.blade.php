@@ -68,6 +68,9 @@
                                     @can('personal_training.view')
                                         <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.training-panel', $member) }}" data-modal-title="Training Packages — {{ $member->full_name }}">Training</a></li>
                                     @endcan
+                                    @can('lockers.view')
+                                        <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.locker-panel', $member) }}" data-modal-title="Locker — {{ $member->full_name }}">Locker</a></li>
+                                    @endcan
                                     @can('settings.view')
                                         <li><a class="dropdown-item" href="#" data-modal-url="{{ route('admin.members.zkteco-panel', $member) }}" data-modal-title="ZKTeco Sync — {{ $member->full_name }}">ZKTeco Sync</a></li>
                                     @endcan

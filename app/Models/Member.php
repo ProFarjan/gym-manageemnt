@@ -95,6 +95,11 @@ class Member extends Authenticatable
         return $this->hasMany(ZKTecoSyncLog::class, 'member_id');
     }
 
+    public function lockers(): HasMany
+    {
+        return $this->hasMany(Locker::class);
+    }
+
     public function openAttendance(): ?Attendance
     {
         return $this->attendances()->whereNull('check_out')->latest('check_in')->first();

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMemberRequest;
 use App\Http\Requests\Admin\UpdateMemberRequest;
 use App\Models\Bill;
+use App\Models\Locker;
 use App\Models\Member;
 use App\Models\MembershipPlan;
 use App\Models\PaymentAccount;
@@ -213,6 +214,36 @@ class MemberController extends Controller
         $trainers = User::role('Trainer')->get();
 
         return view('admin.members.partials.training', compact('member', 'trainingPackages', 'trainers'));
+    }
+
+    /**
+     * Modal panel: the member's assigned locker(s) (usually 0 or 1) plus,
+     * when they have none, a small inline form to assign one of the
+     * currently-available lockers.
+     */
+    public function lockerPanel(Member $member)
+    {
+        $member->load('lockers');
+        $availableLockers = Locker::whereNull('member_id')->orderBy('locker_number')->get();
+
+        return view('admin.members.partials.locker', compact('member', 'availableLockers'));
+    }
+
+    /**
+     * Assign one of the currently-available lockers to this member — the
+     * inverse direction of LockerController::assign() (which starts from a
+     * specific locker and picks a member); this starts from the member and
+     * picks a locker, for the inline form on the Locker modal panel.
+     */
+    public function assignLocker(Request $request, Member $member)
+    {
+        $data = $request->validate(['locker_id' => ['required', 'exists:lockers,id']]);
+
+        $locker = Locker::whereNull('member_id')->findOrFail($data['locker_id']);
+        $locker->update(['member_id' => $member->id, 'assigned_at' => now(), 'rent_due_date' => null]);
+
+        return redirect()->route('admin.members.show', $member)
+            ->with('status', "Locker #{$locker->locker_number} assigned.");
     }
 
     /**

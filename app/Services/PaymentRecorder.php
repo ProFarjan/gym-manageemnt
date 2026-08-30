@@ -86,6 +86,13 @@ class PaymentRecorder
     {
         $bill->load('payments');
 
+        // A locker's rent bill also carries duration_months, but its own
+        // rent_due_date extends via applyLockerBillDurationIfJustCompleted()
+        // below — never the member's own due_date.
+        if ($bill->locker_id) {
+            return;
+        }
+
         if ($bill->duration_applied_at || ! $bill->duration_months || $bill->statusLabel() !== 'paid') {
             return;
         }
@@ -107,6 +114,31 @@ class PaymentRecorder
 
             $member->save();
         }
+
+        $bill->update(['duration_applied_at' => now()]);
+    }
+
+    /**
+     * Locker-rent counterpart to applyBillDurationIfJustCompleted() above,
+     * kept as a fully separate method rather than a branch inside it for the
+     * same reason that one is isolated from record()'s membership branching:
+     * a narrow, single-purpose contract is easier to keep correct than one
+     * method juggling two unrelated "what does duration_months extend"
+     * meanings. Once a locker's rent bill is fully paid, its own
+     * rent_due_date extends by duration_months — the member's own due_date
+     * is never touched here.
+     */
+    public static function applyLockerBillDurationIfJustCompleted(Bill $bill): void
+    {
+        $bill->load('payments');
+
+        if (! $bill->locker_id || $bill->duration_applied_at || ! $bill->duration_months || $bill->statusLabel() !== 'paid') {
+            return;
+        }
+
+        $locker = $bill->locker;
+        $locker->rent_due_date = MembershipCycle::extendByMonths($locker->rent_due_date ?? now(), $bill->duration_months);
+        $locker->save();
 
         $bill->update(['duration_applied_at' => now()]);
     }

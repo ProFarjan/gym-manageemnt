@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\GalleryController;
 use App\Http\Controllers\Admin\GymClassController;
+use App\Http\Controllers\Admin\LockerController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\MembershipPlanController;
 use App\Http\Controllers\Admin\MemberTrainingPackageController;
@@ -101,6 +102,12 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     Route::middleware('permission:settings.view')->group(function () {
         Route::get('/members/{member}/zkteco-panel', [AdminMemberController::class, 'zkTecoPanel'])->name('members.zkteco-panel');
     });
+    Route::middleware('permission:lockers.view')->group(function () {
+        Route::get('/members/{member}/locker-panel', [AdminMemberController::class, 'lockerPanel'])->name('members.locker-panel');
+    });
+    Route::middleware('permission:lockers.update')->group(function () {
+        Route::post('/members/{member}/assign-locker', [AdminMemberController::class, 'assignLocker'])->name('members.assign-locker');
+    });
 
     // Membership Plans
     Route::middleware('permission:membership_plans.view')->group(function () {
@@ -164,6 +171,27 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
     });
     Route::middleware('permission:personal_training.delete')->group(function () {
         Route::delete('/personal-training-packages/{personalTrainingPackage}', [PersonalTrainingPackageController::class, 'destroy'])->name('personal-training-packages.destroy');
+    });
+
+    // Lockers
+    Route::middleware('permission:lockers.view')->group(function () {
+        Route::get('/lockers', [LockerController::class, 'index'])->name('lockers.index');
+    });
+    Route::middleware('permission:lockers.create')->group(function () {
+        Route::get('/lockers/create', [LockerController::class, 'create'])->name('lockers.create');
+        Route::post('/lockers', [LockerController::class, 'store'])->name('lockers.store');
+    });
+    Route::middleware('permission:lockers.update')->group(function () {
+        Route::get('/lockers/{locker}/edit', [LockerController::class, 'edit'])->name('lockers.edit');
+        Route::put('/lockers/{locker}', [LockerController::class, 'update'])->name('lockers.update');
+        Route::get('/lockers/{locker}/assign-panel', [LockerController::class, 'assignPanel'])->name('lockers.assign-panel');
+        Route::post('/lockers/{locker}/assign', [LockerController::class, 'assign'])->name('lockers.assign');
+        Route::post('/lockers/{locker}/unassign', [LockerController::class, 'unassign'])->name('lockers.unassign');
+        Route::get('/lockers/{locker}/bill-panel', [LockerController::class, 'billPanel'])->name('lockers.bill-panel');
+        Route::post('/lockers/{locker}/generate-bill', [LockerController::class, 'generateBill'])->name('lockers.generate-bill');
+    });
+    Route::middleware('permission:lockers.delete')->group(function () {
+        Route::delete('/lockers/{locker}', [LockerController::class, 'destroy'])->name('lockers.destroy');
     });
 
     // Class Schedule

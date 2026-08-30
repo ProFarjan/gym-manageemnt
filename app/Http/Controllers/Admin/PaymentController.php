@@ -41,6 +41,7 @@ class PaymentController extends Controller
         $memberWasPending = $member->status === 'pending';
         $payment = PaymentRecorder::record($member, $data);
         PaymentRecorder::applyBillDurationIfJustCompleted($bill, $memberWasPending);
+        PaymentRecorder::applyLockerBillDurationIfJustCompleted($bill);
 
         return redirect()->route('admin.members.show', $member)
             ->with('status', "Payment recorded against {$bill->bill_number} ({$payment->receipt_number}).");

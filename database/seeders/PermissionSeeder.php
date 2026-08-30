@@ -22,6 +22,7 @@ class PermissionSeeder extends Seeder
         'users',
         'membership_plans',
         'personal_training',
+        'lockers',
     ];
 
     private const ACTIONS = ['view', 'create', 'update', 'delete'];
@@ -62,6 +63,7 @@ class PermissionSeeder extends Seeder
             'offers.view',
             'reports.view',
             'membership_plans.view',
+            'lockers.view', 'lockers.create',
         ]);
 
         Role::findByName('Trainer', 'web')->syncPermissions([
