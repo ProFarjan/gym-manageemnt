@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Member;
 use App\Models\ZKTecoCommand;
+use App\Models\ZKTecoSyncLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -118,8 +119,24 @@ class ZKTecoSyncController extends Controller
                 ->update(['zkteco_user_id' => $command->payload['user_id']]);
         }
 
-        if ($result['success'] && $command->type === 'delete_user' && ! empty($command->payload['member_id'])) {
+        // 'disable_user' (see SyncMemberToZKTeco) reuses this same
+        // delete_user command with keep_zkteco_user_id set, so it's still
+        // enrolled the moment the member reactivates — mirrors Direct
+        // mode's ZKTecoDeviceClient::disableUser() not clearing it either.
+        if ($result['success'] && $command->type === 'delete_user' && ! empty($command->payload['member_id']) && empty($command->payload['keep_zkteco_user_id'])) {
             Member::whereKey($command->payload['member_id'])->update(['zkteco_user_id' => null]);
+        }
+
+        // Reflect the outcome back onto the ZKTecoSyncLog row that queued
+        // this command (Member status change -> MemberObserver ->
+        // SyncMemberToZKTeco), if any — a command queued directly by an
+        // admin from Settings > ZKTeco has none.
+        if ($command->zkteco_sync_log_id) {
+            ZKTecoSyncLog::whereKey($command->zkteco_sync_log_id)->update([
+                'status' => $result['success'] ? 'success' : 'failed',
+                'synced_at' => $result['success'] ? now() : null,
+                'error_message' => $result['success'] ? null : ($result['message'] ?? 'Local Service command failed.'),
+            ]);
         }
     }
 

@@ -20,6 +20,7 @@ class ZKTecoCommand extends Model
     protected $table = 'zkteco_commands';
 
     protected $fillable = [
+        'zkteco_sync_log_id',
         'type',
         'payload',
         'status',
@@ -42,5 +43,10 @@ class ZKTecoCommand extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function syncLog(): BelongsTo
+    {
+        return $this->belongsTo(ZKTecoSyncLog::class, 'zkteco_sync_log_id');
     }
 }

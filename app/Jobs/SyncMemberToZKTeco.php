@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\Member;
+use App\Models\ZKTecoCommand;
 use App\Models\ZKTecoSyncLog;
 use App\Services\ZKTeco\ZKTecoDeviceClient;
 use Illuminate\Bus\Queueable;
@@ -33,6 +35,19 @@ class SyncMemberToZKTeco implements ShouldQueue
 
         $log->increment('attempts');
 
+        // In Local Service mode the Laravel server has no network path to
+        // the device by design — a direct TCP attempt here would just fail
+        // (or worse, spuriously succeed if the server happens to have
+        // incidental access, bypassing the intended architecture). Queue a
+        // command for the Windows service instead and leave this log
+        // 'pending' — ZKTecoSyncController::sync() finalizes it (success or
+        // failed) once the service reports the result back.
+        if (setting('zkteco_mode', 'direct') === 'service') {
+            $this->queueForLocalService($log);
+
+            return;
+        }
+
         $method = match ($log->action) {
             'create_user' => 'createUser',
             'update_user' => 'updateUser',
@@ -46,6 +61,33 @@ class SyncMemberToZKTeco implements ShouldQueue
             'status' => 'success',
             'synced_at' => now(),
             'error_message' => null,
+        ]);
+    }
+
+    /**
+     * The device has no soft-disable command — 'disable_user' maps to the
+     * same delete_user command the Windows service already understands
+     * (same physical device operation as a real delete), just flagged so
+     * ZKTecoSyncController keeps the member's zkteco_user_id instead of
+     * clearing it, mirroring Direct mode's ZKTecoDeviceClient::disableUser().
+     */
+    private function queueForLocalService(ZKTecoSyncLog $log): void
+    {
+        /** @var Member $member */
+        $member = $log->member;
+
+        [$type, $payload] = match ($log->action) {
+            'create_user' => ['create_user', ['member_id' => $member->id, 'user_id' => $member->admission_id, 'name' => $member->full_name]],
+            'update_user' => ['update_user', ['member_id' => $member->id, 'user_id' => $member->admission_id, 'name' => $member->full_name]],
+            'disable_user' => ['delete_user', ['member_id' => $member->id, 'keep_zkteco_user_id' => true]],
+            'delete_user' => ['delete_user', ['member_id' => $member->id]],
+        };
+
+        ZKTecoCommand::create([
+            'zkteco_sync_log_id' => $log->id,
+            'type' => $type,
+            'payload' => $payload,
+            'status' => 'pending',
         ]);
     }
 
