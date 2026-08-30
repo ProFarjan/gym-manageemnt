@@ -76,11 +76,20 @@ class SyncMemberToZKTeco implements ShouldQueue
         /** @var Member $member */
         $member = $log->member;
 
+        // The Windows service's executeDeviceCommand() (service_worker.php)
+        // requires payload['user_id'] for every one of these command types —
+        // it's the device userid string it looks up (delete_user/update_user)
+        // or enrolls under (create_user), not Laravel's own member_id. Falls
+        // back to admission_id when zkteco_user_id isn't set yet (e.g. the
+        // very first create_user for this member), since that's what
+        // create_user itself enrolls them under.
+        $deviceUserId = $member->zkteco_user_id ?: $member->admission_id;
+
         [$type, $payload] = match ($log->action) {
-            'create_user' => ['create_user', ['member_id' => $member->id, 'user_id' => $member->admission_id, 'name' => $member->full_name]],
-            'update_user' => ['update_user', ['member_id' => $member->id, 'user_id' => $member->admission_id, 'name' => $member->full_name]],
-            'disable_user' => ['delete_user', ['member_id' => $member->id, 'keep_zkteco_user_id' => true]],
-            'delete_user' => ['delete_user', ['member_id' => $member->id]],
+            'create_user' => ['create_user', ['member_id' => $member->id, 'user_id' => $deviceUserId, 'name' => $member->full_name]],
+            'update_user' => ['update_user', ['member_id' => $member->id, 'user_id' => $deviceUserId, 'name' => $member->full_name]],
+            'disable_user' => ['delete_user', ['member_id' => $member->id, 'user_id' => $deviceUserId, 'keep_zkteco_user_id' => true]],
+            'delete_user' => ['delete_user', ['member_id' => $member->id, 'user_id' => $deviceUserId]],
         };
 
         ZKTecoCommand::create([
