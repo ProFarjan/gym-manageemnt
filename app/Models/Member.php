@@ -111,6 +111,16 @@ class Member extends Authenticatable
     }
 
     /**
+     * The user ID sent to/expected from the ZKTeco device — just the digits
+     * of admission_id, with any letter prefix (e.g. "GG") stripped, since
+     * the device is keypad/numeric-ID driven.
+     */
+    public function zktecoDeviceUserId(): string
+    {
+        return preg_replace('/\D/', '', $this->admission_id) ?? '';
+    }
+
+    /**
      * The oldest bill (invoice-by-invoice, ascending) that isn't fully paid
      * yet — the one a "Pay Due" payment should be applied against.
      */

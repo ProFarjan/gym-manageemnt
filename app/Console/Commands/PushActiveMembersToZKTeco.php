@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Log;
 /**
  * One-shot bulk push: create/overwrite every active member as a user on the
  * ZKTeco device directly over Direct IP mode, using the member's own id as
- * the device uid and admission_id as the device user_id (same convention as
- * ZKTecoDeviceClient::pushUser()), all with the given fingerprint/keypad
+ * the device uid and Member::zktecoDeviceUserId() (admission_id's digits,
+ * no "GG" prefix) as the device user_id — same convention as
+ * ZKTecoDeviceClient::pushUser() — all with the given fingerprint/keypad
  * login password. Opens a single device connection for the whole batch
  * instead of reconnecting per member, since this is 80+ writes in one go.
  */
@@ -54,7 +55,12 @@ class PushActiveMembersToZKTeco extends Command
         try {
             foreach ($members as $member) {
                 try {
-                    $userId = $member->admission_id;
+                    $userId = $member->zktecoDeviceUserId();
+
+                    if ($userId === '') {
+                        throw new \RuntimeException('admission_id has no digits to send.');
+                    }
+
                     $ok = $client->setUser($member->id, $userId, $member->full_name, $password);
 
                     if (! $ok) {

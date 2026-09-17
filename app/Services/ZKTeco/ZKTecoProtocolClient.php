@@ -194,11 +194,11 @@ class ZKTecoProtocolClient
             $data = substr($data, 0, $size);
         }
 
-        if (strlen($data) <= 11) {
+        if (strlen($data) <= 4) {
             return [];
         }
 
-        $records = substr($data, 11);
+        $records = substr($data, 4);
 
         return $this->parseUserRecords($records, $this->detectRecordLength($records));
     }
@@ -209,17 +209,18 @@ class ZKTecoProtocolClient
     private function parseUserRecords(string $records, int $chunkLen): array
     {
         // 72-byte layout empirically confirmed against the real configured
-        // device (not the documented pyzk/ProFarjan layout, which this
-        // firmware's CMD_USER_TEMP_RRQ response does NOT follow — verified
-        // by capturing the raw buffer, writing a known test record via
-        // setUser(), and reading it back byte-for-byte): 4 reserved +
-        // name(24) + card(4) + privilege(1) + 8 reserved + userid(24) +
-        // uid(2, LE) + 5 reserved = 72. setUser()'s write payload uses a
-        // different layout than this read layout — the device remaps them
-        // internally, confirmed by round-tripping a real test write/read.
+        // device — verified by writing a known test record via setUser()
+        // and reading it back byte-for-byte (hex-dumped and matched field
+        // by field): uid(2, LE) + role/privilege(1) + password(8) +
+        // name(24) + card(4, LE) + reserved(9, first byte fixed 0x01) +
+        // userid(9) + reserved(15) = 72. This is the SAME layout
+        // setUser()'s write payload uses — the previous claim that read and
+        // write used different layouts was itself the bug (an unverified
+        // guess), which is what caused user records to parse with fields
+        // shifted/misaligned.
         $format = $chunkLen === 28
             ? 'vuid/Cprivilege/a5password/a8name/Vcard/x/Cgroup/vtimezone/Vuserid'
-            : 'x4/a24name/Vcard/Cprivilege/x8/a24userid/vuid/x5';
+            : 'vuid/Cprivilege/a8password/a24name/Vcard/x9/a9userid/x15';
 
         $users = [];
         $offset = 0;
@@ -337,11 +338,7 @@ class ZKTecoProtocolClient
             $chunkSize = min(self::MAX_CHUNK, $remaining);
             $chunkResponse = $this->sendAndReceive(self::CMD_READ_BUFFER, pack('VV', $start, $chunkSize));
 
-            if ($chunkResponse['command'] !== self::CMD_DATA) {
-                throw new RuntimeException('Unexpected response while reading buffered data from the device.');
-            }
-
-            $data .= $chunkResponse['payload'];
+            $data .= $this->collectChunkData($chunkResponse, $chunkSize);
             $start += $chunkSize;
             $remaining -= $chunkSize;
         }
@@ -349,6 +346,33 @@ class ZKTecoProtocolClient
         $this->sendAndReceive(self::CMD_FREE_DATA, '');
 
         return $data;
+    }
+
+    /**
+     * A CMD_READ_BUFFER request is answered either with the chunk's bytes
+     * directly (CMD_DATA), or — observed on this firmware once the chunk is
+     * more than a few hundred bytes — with a CMD_PREPARE_DATA announcement
+     * followed by the actual bytes streamed as further unsolicited packets,
+     * the same pattern getUsersSimple() already handles for its own
+     * single-shot request.
+     */
+    private function collectChunkData(array $response, int $expectedSize): string
+    {
+        if ($response['command'] === self::CMD_DATA) {
+            return $response['payload'];
+        }
+
+        if ($response['command'] === self::CMD_PREPARE_DATA) {
+            $data = '';
+
+            while (strlen($data) < $expectedSize) {
+                $data .= $this->receive()['payload'];
+            }
+
+            return substr($data, 0, $expectedSize);
+        }
+
+        throw new RuntimeException('Unexpected response while reading buffered data from the device.');
     }
 
     /**

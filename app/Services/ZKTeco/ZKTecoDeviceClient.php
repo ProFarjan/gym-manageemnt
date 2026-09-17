@@ -19,9 +19,10 @@ use RuntimeException;
  *
  * The device's numeric uid (its internal record slot, 1-65535) is the
  * Member's own primary key — small, unique, and guaranteed to fit. The
- * device's 9-char user_id string is the Member's admission_id, which is
- * what gets stored back onto Member.zkteco_user_id once a create/update
- * succeeds.
+ * device's 9-char user_id string is Member::zktecoDeviceUserId() — the
+ * digits of admission_id with any letter prefix (e.g. "GG") stripped, since
+ * the device is keypad/numeric-ID driven — which is what gets stored back
+ * onto Member.zkteco_user_id once a create/update succeeds.
  */
 class ZKTecoDeviceClient
 {
@@ -75,7 +76,7 @@ class ZKTecoDeviceClient
         }
 
         try {
-            $userId = $member->admission_id;
+            $userId = $member->zktecoDeviceUserId();
             $created = $client->setUser($member->id, $userId, $member->full_name, $password);
 
             if (! $created) {

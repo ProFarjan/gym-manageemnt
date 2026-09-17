@@ -79,11 +79,13 @@ class SyncMemberToZKTeco implements ShouldQueue
         // The Windows service's executeDeviceCommand() (service_worker.php)
         // requires payload['user_id'] for every one of these command types —
         // it's the device userid string it looks up (delete_user/update_user)
-        // or enrolls under (create_user), not Laravel's own member_id. Falls
-        // back to admission_id when zkteco_user_id isn't set yet (e.g. the
-        // very first create_user for this member), since that's what
-        // create_user itself enrolls them under.
-        $deviceUserId = $member->zkteco_user_id ?: $member->admission_id;
+        // or enrolls under (create_user), not Laravel's own member_id. This
+        // is always the numeric-only ID (Member::zktecoDeviceUserId()), not
+        // admission_id with its "GG" prefix, since the device is
+        // keypad/numeric-ID driven — recomputed here rather than trusting a
+        // stale zkteco_user_id, in case admission_id changed since it was
+        // last set.
+        $deviceUserId = $member->zktecoDeviceUserId();
 
         [$type, $payload] = match ($log->action) {
             'create_user' => ['create_user', ['member_id' => $member->id, 'user_id' => $deviceUserId, 'name' => $member->full_name]],
