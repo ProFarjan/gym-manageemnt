@@ -35,6 +35,12 @@
                         <button class="btn btn-dark">Close Membership</button>
                     </form>
                 @endif
+                @if (in_array($member->status, ['expired', 'closed']))
+                    <form method="POST" action="{{ route('admin.members.activate', $member) }}" onsubmit="return confirm('Reactivate this member? Their due date will be extended by one renewal cycle from today.');">
+                        @csrf
+                        <button class="btn btn-success">Activate</button>
+                    </form>
+                @endif
             @endcan
             @can('payments.create')
                 <a href="#" class="btn btn-primary" data-modal-url="{{ route('admin.members.pay-due', $member) }}" data-modal-title="Pay Due — {{ $member->full_name }}">Pay Due</a>

@@ -52,6 +52,65 @@
             </div>
         </div>
     </div>
+
+    <div class="card mt-3">
+        <div class="card-header">Today's Attendance</div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Admission ID</th>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Total Duration</th>
+                        <th>Source</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($todayAttendance as $attendance)
+                        <tr>
+                            <td>{{ $attendance->member->admission_id }}</td>
+                            <td>{{ $attendance->member->full_name }}</td>
+                            <td>{{ $attendance->member->mobile_number }}</td>
+                            <td>{{ $attendance->check_in->format('h:i A') }}</td>
+                            <td>
+                                @if ($attendance->check_out)
+                                    {{ $attendance->check_out->format('h:i A') }}
+                                @else
+                                    <span class="badge bg-success">Still In</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($attendance->duration_minutes)
+                                    {{ $attendance->duration_minutes }} min
+                                @else
+                                    {{ $attendance->check_in->diffInMinutes(now()) }} min <span class="text-muted small">(ongoing)</span>
+                                @endif
+                            </td>
+                            <td>{{ ucfirst($attendance->source) }}</td>
+                            <td class="text-end">
+                                @can('attendance.create')
+                                    @unless ($attendance->check_out)
+                                        <form method="POST" action="{{ route('admin.members.attendance.check-out', $attendance->member) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Check Out</button>
+                                        </form>
+                                    @endunless
+                                @endcan
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No attendance recorded today.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')

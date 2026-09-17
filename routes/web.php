@@ -77,6 +77,7 @@ Route::middleware(['auth:web'])->prefix('admin')->name('admin.')->group(function
         Route::get('/members/{member}/edit', [AdminMemberController::class, 'edit'])->name('members.edit');
         Route::put('/members/{member}', [AdminMemberController::class, 'update'])->name('members.update');
         Route::post('/members/{member}/close', [AdminMemberController::class, 'close'])->name('members.close');
+        Route::post('/members/{member}/activate', [AdminMemberController::class, 'activate'])->name('members.activate');
     });
     Route::middleware('permission:members.delete')->group(function () {
         Route::delete('/members/{member}', [AdminMemberController::class, 'destroy'])->name('members.destroy');

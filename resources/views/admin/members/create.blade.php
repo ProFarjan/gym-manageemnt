@@ -22,6 +22,11 @@
             <div class="card-header">Personal Information</div>
             <div class="card-body row g-3">
                 <div class="col-md-6">
+                    <label class="form-label">Member ID <span class="text-danger">*</span></label>
+                    <input type="text" name="admission_id" value="{{ old('admission_id', $suggestedAdmissionId) }}" class="form-control" required>
+                    <div class="form-text">Auto-suggested as the next available ID — change it if you need a specific one.</div>
+                </div>
+                <div class="col-md-6">
                     <label class="form-label">Full Name <span class="text-danger">*</span></label>
                     <input type="text" name="full_name" value="{{ old('full_name') }}" class="form-control" placeholder="e.g. Jane Rahman" required>
                 </div>

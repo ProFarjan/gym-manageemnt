@@ -25,14 +25,14 @@ use RuntimeException;
  */
 class ZKTecoDeviceClient
 {
-    public function createUser(Member $member): bool
+    public function createUser(Member $member, string $password = ''): bool
     {
-        return $this->pushUser($member);
+        return $this->pushUser($member, $password);
     }
 
-    public function updateUser(Member $member): bool
+    public function updateUser(Member $member, string $password = ''): bool
     {
-        return $this->pushUser($member);
+        return $this->pushUser($member, $password);
     }
 
     /**
@@ -58,7 +58,7 @@ class ZKTecoDeviceClient
         return $removed;
     }
 
-    private function pushUser(Member $member): bool
+    private function pushUser(Member $member, string $password = ''): bool
     {
         $ip = setting('zkteco_ip');
         $port = (int) setting('zkteco_port', 4370);
@@ -76,7 +76,7 @@ class ZKTecoDeviceClient
 
         try {
             $userId = $member->admission_id;
-            $created = $client->setUser($member->id, $userId, $member->full_name);
+            $created = $client->setUser($member->id, $userId, $member->full_name, $password);
 
             if (! $created) {
                 throw new RuntimeException('Device rejected the create/update request.');

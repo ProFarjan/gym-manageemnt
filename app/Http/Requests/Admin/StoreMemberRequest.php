@@ -20,6 +20,7 @@ class StoreMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'admission_id' => ['required', 'string', 'max:50', 'unique:members,admission_id'],
             'full_name' => ['required', 'string', 'max:255'],
             'mobile_number' => ['required', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:255', 'unique:members,email'],

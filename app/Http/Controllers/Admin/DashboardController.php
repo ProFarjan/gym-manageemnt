@@ -26,6 +26,11 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
+        $todayAttendance = Attendance::with('member')
+            ->whereDate('check_in', today())
+            ->orderByDesc('check_in')
+            ->get();
+
         $revenueChart = $this->revenueChartData();
         $membershipChart = [
             'labels' => ['Active', 'Expired', 'Closed', 'Pending'],
@@ -37,7 +42,7 @@ class DashboardController extends Controller
             ],
         ];
 
-        return view('admin.dashboard', compact('stats', 'revenueChart', 'membershipChart'));
+        return view('admin.dashboard', compact('stats', 'revenueChart', 'membershipChart', 'todayAttendance'));
     }
 
     private function revenueChartData(): array

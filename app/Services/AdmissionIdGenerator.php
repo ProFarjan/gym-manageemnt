@@ -13,11 +13,11 @@ class AdmissionIdGenerator
 
         return DB::transaction(function () use ($prefix) {
             $sequence = Member::count() + 1;
-            $candidate = sprintf('%s%05d', $prefix, $sequence);
+            $candidate = sprintf('%s%d', $prefix, $sequence);
 
             while (Member::where('admission_id', $candidate)->exists()) {
                 $sequence++;
-                $candidate = sprintf('%s%05d', $prefix, $sequence);
+                $candidate = sprintf('%s%d', $prefix, $sequence);
             }
 
             return $candidate;

@@ -13,6 +13,7 @@ use App\Models\PaymentAccount;
 use App\Models\PersonalTrainingPackage;
 use App\Models\User;
 use App\Services\AdmissionIdGenerator;
+use App\Services\MembershipCycle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -64,8 +65,9 @@ class MemberController extends Controller
     public function create()
     {
         $plans = MembershipPlan::where('is_active', true)->get();
+        $suggestedAdmissionId = AdmissionIdGenerator::generate();
 
-        return view('admin.members.create', compact('plans'));
+        return view('admin.members.create', compact('plans', 'suggestedAdmissionId'));
     }
 
     /**
@@ -77,7 +79,6 @@ class MemberController extends Controller
         $data['discount_amount'] = $data['discount_amount'] ?? 0;
 
         $member = new Member($data);
-        $member->admission_id = AdmissionIdGenerator::generate();
         $member->registration_type = 'admin';
         $member->registered_by = $request->user()->id;
         $member->status = 'pending';
@@ -320,5 +321,31 @@ class MemberController extends Controller
         $member->save();
 
         return back()->with('status', "Member {$member->admission_id} membership closed.");
+    }
+
+    /**
+     * Manually reactivate an Expired or Closed member (admin discretion —
+     * e.g. a courtesy extension, or correcting a mistake — separate from
+     * the normal "renew by paying a bill" flow). Extends due_date the same
+     * way a real renewal payment would (one cycle on the member's own
+     * plan, or a flat month if they have none/a lifetime plan) rather than
+     * just flipping status, so they aren't immediately re-expired by
+     * tomorrow's status sync. Routes through the normal save(), so
+     * MemberObserver's existing active-transition handling (ZKTeco
+     * re-enrollment) applies exactly as it already does for a renewal.
+     */
+    public function activate(Member $member)
+    {
+        $plan = $member->membershipPlan;
+        $anchor = $member->due_date ?? now();
+
+        $member->due_date = $plan
+            ? MembershipCycle::extend($anchor, $plan, 1)
+            : MembershipCycle::extendByMonths($anchor, 1);
+        $member->status = 'active';
+        $member->closed_at = null;
+        $member->save();
+
+        return back()->with('status', "Member {$member->admission_id} reactivated.");
     }
 }
