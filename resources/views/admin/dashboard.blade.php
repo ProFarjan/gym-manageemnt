@@ -54,7 +54,7 @@
     </div>
 
     <div class="card mt-3">
-        <div class="card-header">Today's Attendance</div>
+        <div class="card-header">Members Currently In Gym</div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -103,7 +103,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">No attendance recorded today.</td>
+                            <td colspan="8" class="text-center text-muted py-4">No members currently in the gym.</td>
                         </tr>
                     @endforelse
                 </tbody>

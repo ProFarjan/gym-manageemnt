@@ -28,6 +28,7 @@ class DashboardController extends Controller
 
         $todayAttendance = Attendance::with('member')
             ->whereDate('check_in', today())
+            ->whereNull('check_out')
             ->orderByDesc('check_in')
             ->get();
 
