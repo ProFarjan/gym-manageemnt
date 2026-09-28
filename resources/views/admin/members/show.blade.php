@@ -36,10 +36,7 @@
                     </form>
                 @endif
                 @if (in_array($member->status, ['expired', 'closed']))
-                    <form method="POST" action="{{ route('admin.members.activate', $member) }}" onsubmit="return confirm('Reactivate this member? Their due date will be extended by one renewal cycle from today.');">
-                        @csrf
-                        <button class="btn btn-success">Activate</button>
-                    </form>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#activateMemberModal">Activate</button>
                 @endif
             @endcan
             @can('payments.create')
@@ -208,4 +205,36 @@
             </div>
         </div>
     </div>
+
+    @if (in_array($member->status, ['expired', 'closed']))
+    <div class="modal fade" id="activateMemberModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('admin.members.activate', $member) }}" class="modal-content">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Activate Member</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Set Due Date <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                            <input type="text" name="due_date" class="form-control report-datepicker" required value="{{ now()->format('Y-m-d') }}" data-min="{{ now()->format('Y-m-d') }}">
+                        </div>
+                        <div class="form-text">Select the new due date for this member.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note (Optional)</label>
+                        <textarea name="activation_note" class="form-control" rows="3" placeholder="Reason for activation..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Activate Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
 @endsection

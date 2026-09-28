@@ -334,14 +334,15 @@ class MemberController extends Controller
      * MemberObserver's existing active-transition handling (ZKTeco
      * re-enrollment) applies exactly as it already does for a renewal.
      */
-    public function activate(Member $member)
+    public function activate(Request $request, Member $member)
     {
-        $plan = $member->membershipPlan;
-        $anchor = $member->due_date ?? now();
+        $data = $request->validate([
+            'due_date' => ['required', 'date'],
+            'activation_note' => ['nullable', 'string']
+        ]);
 
-        $member->due_date = $plan
-            ? MembershipCycle::extend($anchor, $plan, 1)
-            : MembershipCycle::extendByMonths($anchor, 1);
+        $member->due_date = $data['due_date'];
+        $member->activation_note = $data['activation_note'] ?? null;
         $member->status = 'active';
         $member->closed_at = null;
         $member->save();
