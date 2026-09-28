@@ -15,7 +15,12 @@
                             <span class="badge bg-info">Still In</span>
                         @endif
                     </td>
-                    <td>{{ $attendance->duration_minutes ? $attendance->duration_minutes.' min' : '—' }}</td>
+                    <td>
+                        {{ $attendance->formattedDuration() }}
+                        @unless ($attendance->duration_minutes)
+                            <span class="text-muted small">(ongoing)</span>
+                        @endunless
+                    </td>
                     <td class="text-capitalize">{{ $attendance->source }}</td>
                 </tr>
             @empty

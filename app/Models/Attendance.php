@@ -31,4 +31,18 @@ class Attendance extends Model
     {
         return $this->belongsTo(Member::class);
     }
+
+    public function formattedDuration(): string
+    {
+        $minutes = (int) ($this->duration_minutes ?? $this->check_in->diffInMinutes(now()));
+        
+        $hours = floor($minutes / 60);
+        $rem = $minutes % 60;
+
+        if ($hours > 0) {
+            return "{$hours}h {$rem}m";
+        }
+
+        return "{$rem}m";
+    }
 }

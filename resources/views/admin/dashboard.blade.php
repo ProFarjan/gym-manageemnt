@@ -84,11 +84,10 @@
                                 @endif
                             </td>
                             <td>
-                                @if ($attendance->duration_minutes)
-                                    {{ $attendance->duration_minutes }} min
-                                @else
-                                    {{ $attendance->check_in->diffInMinutes(now()) }} min <span class="text-muted small">(ongoing)</span>
-                                @endif
+                                {{ $attendance->formattedDuration() }}
+                                @unless ($attendance->duration_minutes)
+                                    <span class="text-muted small">(ongoing)</span>
+                                @endunless
                             </td>
                             <td>{{ ucfirst($attendance->source) }}</td>
                             <td class="text-end">

@@ -41,7 +41,7 @@ class MemberObserver
             $current = $member->status;
 
             match (true) {
-                $current === 'active' && $previous === 'pending' => $this->queueSync($member, 'create_user'),
+                $current === 'active' && in_array($previous, ['pending', 'closed', 'expired']) => $this->queueSync($member, 'create_user'),
                 $current === 'active' => $this->queueSync($member, 'update_user'),
                 $current === 'expired' => $this->queueSync($member, 'disable_user'),
                 $current === 'closed' => $this->queueSync($member, 'delete_user'),
@@ -59,7 +59,7 @@ class MemberObserver
             return;
         }
 
-        if ($member->status === 'active' && $member->wasChanged(['full_name', 'photo_path'])) {
+        if ($member->status === 'active' && $member->wasChanged(['full_name', 'photo_path', 'due_date'])) {
             $this->queueSync($member, 'update_user');
         }
 

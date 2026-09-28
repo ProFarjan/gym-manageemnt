@@ -192,32 +192,38 @@ class ZKTecoSyncController extends Controller
         }
 
         $source = self::AUTH_METHOD_SOURCE[$authMethod] ?? 'manual';
+        $open = $member->openAttendance();
 
-        if (in_array($type, self::IN_TYPES, true)) {
-            if ($member->openAttendance()) {
+        // If the device sends a Check-Out explicitly (type 1 or 5), OR if it sends a Check-In (type 0 or 4) 
+        // but the member ALREADY has an open attendance (meaning they didn't press the OUT button on the machine),
+        // we treat this punch as a Check-Out.
+        if (in_array($type, self::OUT_TYPES, true) || ($open && in_array($type, self::IN_TYPES, true))) {
+            if (! $open) {
                 return false;
             }
 
-            $member->attendances()->create([
-                'check_in' => $datetime,
-                'source' => $source,
-                'zkteco_log_id' => $logId,
-            ]);
-
-            return true;
-        }
-
-        if (in_array($type, self::OUT_TYPES, true)) {
-            $open = $member->openAttendance();
-
-            if (! $open) {
+            // Anti-double-bounce: ignore accidental double swipes within 2 minutes
+            if ($open->check_in->diffInMinutes($datetime) < 2) {
                 return false;
             }
 
             $open->update([
                 'check_out' => $datetime,
                 'duration_minutes' => $open->check_in->diffInMinutes($datetime),
-                'zkteco_log_id' => $open->zkteco_log_id ?? $logId,
+                // We keep the original check_in log ID on the row, 
+                // but this new checkout log ID won't be saved. 
+                // That's fine because idempotency on checkouts isn't strictly necessary 
+                // if it's already checked out (openAttendance() will be null next time).
+            ]);
+
+            return true;
+        }
+
+        if (in_array($type, self::IN_TYPES, true)) {
+            $member->attendances()->create([
+                'check_in' => $datetime,
+                'source' => $source,
+                'zkteco_log_id' => $logId,
             ]);
 
             return true;
