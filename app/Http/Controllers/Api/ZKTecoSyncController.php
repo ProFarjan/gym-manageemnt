@@ -140,6 +140,8 @@ class ZKTecoSyncController extends Controller
         }
     }
 
+    private ?array $numericAdmissionIdMap = null;
+
     /**
      * @param  array{user_id: string, attendance_datetime: string, attendance_type?: int, auth_method?: int}  $record
      */
@@ -154,6 +156,28 @@ class ZKTecoSyncController extends Controller
         $member = Member::where('zkteco_user_id', $userId)
             ->orWhere('admission_id', $userId)
             ->first();
+
+        // Fallback: The device sends numeric-only IDs (e.g. "101"), but the DB might 
+        // have admission_id "GG101" and a missing zkteco_user_id.
+        // We use an in-memory map populated once per request to avoid N+1 full table scans.
+        if (! $member) {
+            if ($this->numericAdmissionIdMap === null) {
+                $this->numericAdmissionIdMap = [];
+                // Only load members who don't have a ZKTeco ID yet to build the fallback map
+                $membersWithoutZkTecoId = Member::whereNull('zkteco_user_id')->get(['id', 'admission_id']);
+                
+                foreach ($membersWithoutZkTecoId as $m) {
+                    $numericId = preg_replace('/\D/', '', $m->admission_id);
+                    if ($numericId !== '') {
+                        $this->numericAdmissionIdMap[$numericId] = $m->id;
+                    }
+                }
+            }
+
+            if (isset($this->numericAdmissionIdMap[(string)$userId])) {
+                $member = Member::find($this->numericAdmissionIdMap[(string)$userId]);
+            }
+        }
 
         if (! $member) {
             return false;
